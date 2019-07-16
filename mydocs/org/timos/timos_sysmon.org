@@ -1,0 +1,19 @@
+* Sysmon is initialized in nvcCreate
+* Sysmon Update interval from VSC
+** int nvcSysmonUpdateTime = 600; /* 10 Minutes */
+** int nvcSysmonRateLimitTime = 60; // 1 Minutes
+* Method that sends sysmon xml to VSD
+** nvcSendSysmonXml
+* Sysmon XML is sent in following scenarios
+** Send sysmon message as soon as XMPP comes up. When we subscribe to TIM_XMPP_TOPIC_SYS_CFG.
+** Send sysmon xml when the PUSH level is NVC_LEVEL_VSC or NVC_LEVEL_HSC.
+** Sysmon xml is also sent when nvcSysmonRateLimitTimerExp method is called every minute.
+** Sysmon messages will not be sent more than nvcSysmonRateLimitCount(5) in nvcSysmonRateLimitTime(1 minute).
+* When we receive a PUSH from VSD with NVC_LEVEL_VRS. Sysmon probe on VRS from VSC is NVC_VCA_SYSMON_CMD.
+* Sysmon XML is updated in nvcVcaUpdateSysmonStatusXml based on some events and sent to VSD.
+** When openflow is in ready state.
+** When we recevie VRSGInfo PDU.
+** When we receive VmInfo PDU.
+** When a VCA exits GR mode.
+** When adding a new json session.
+** When there is a json session event.

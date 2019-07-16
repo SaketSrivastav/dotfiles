@@ -1,0 +1,315 @@
+-------------------------------------------------------------------
+GASH
+-------------------------------------------------------------------
+- To get the IP of VSD:
+	grep vsd images/esrcalls.tcl
+
+gash -platform dctor -subTopology dcExpress -cvs_tag TiMOS-DC_0_0 -priority P3 -runLevel express
+
+gash -platform dctor -subTopology dctorOvs -cvs_tag TiMOS-DC_0_0 -priority P3 -runLevel regular -cnaSim false
+
+- This is a basic test for dctorOvs setup
+	gash> configureAuthSetup -trafficTest false
+
+If rvars.sh show <IP> <IPMI>
+to access the console use:
+	cnsl <IP> IPMI
+
+public ip for vsd
+-----------------------------
+socat TCP-LISTEN:8443,reuseaddr,fork TCP:vsd-1:8443 &
+
+- waitForLinuxSimsAfterReboot
+- Qos Setup:
+ovsQosSetup
+set ovsList "1 3"
+set srcOvsList "1"
+set dstOvsList "1 3"
+
+set numVm 2
+set numNwPerVrf 2
+set numVrfs 2
+
+set qosParams "{avg 5} {peak 5} {burst 5000} {rl true} {fc af}"
+
+dcQosFunct -qosParams $qosParams -txRate 409600 -numVm $numVm -numNwPerVrf $numNwPerVrf -numVrfs $numVrfs -rewriteFc true -ovsList $dstOvsList -dstOvsList $dstOvsList -srcOvsList $srcOvsList -testRandPri 1 -testDeconfig false
+
+- Add a vlan to a access port
+	nuage-vlan-config mod eth2 Access 1-4095
+
+
+ - Mirror Setup:
+ 	cnaSim false
+ 	configureMirrorSetup
+
+ - VSD LOCATIONS:
+    /usr/global/images/vsd/0.0/latest
+
+ - regress -altpackages vsd=2.1.0_Nightly_518 -platform dctor -subTopology dctorOvs -cvs_tag TiMOS-DC_0_0 -priority P3 -runLevel regular -cnaSim false -dcMemLeakCheck true -memPools NVC -altimages 7750/0.0/latest 7750/0.0/latest -runTest l2TorGw_scale_events_provision -nobuild -testbed mvdcdev08
+
+  - gash -subTopology dcExpress -runLevel express -platform dctor -vsd 0.0/992 -bofa enableChecks -cvs_tag TiMOS-DC_0_0
+
+-  NSG:
+    regress -physTopology nsg -platform dctor -cvs_tag TiMOS-DC_0_0 -priority P3 -runLevel regular -forcePause nsg -runSuite Sanity
+    
+    gash physTopology nsg -platform dctor -cvs_tag TiMOS-DC_0_0 -priority P3 -runLevel regular
+
+
+gash -xmppServerIp 135.227.150.20 -xmppServerHostName vsd-1.mvdcdev02.us.alcatel-lucent.com -dcccController true -ctrlrRedundancy true
+
+regress -platform dctor -subTopology /home/xzhao025/global/regressTopos/dctor/stdSixDut/altos -cvs_tag TiMOS-DC_0_0 -priority P3 -runLevel quick -altimages 7750/0.0/latest 7750/0.0/latest -nobuild -testbed 
+
+regress -platform dctor -subTopology altos -cvs_tag TiMOS-DC_0_0 -priority P3 -runLevel quick -altimages 7750/0.0/latest 7750/0.0/latest -nobuild -testbed 
+
+
+Simple Setup:
+configureDvrsSetup -trafficTest false -vmConsoleAccess true -numVmPerSubnet 2
+deconfigureDvrsSetup -trafficTest false
+
+admin save ftp://mvdcdev07:tigris@mvdcdev07:/./images/dut-g.cfg
+admin save ftp://saketkus:tigris@172.21.32.44:/./config-save/test.cfg
+admin save ftp://saketkus:tigris@135.227.222.26:/./config-save/test.cfg   =======> VM (saket-vrs)
+
+
+configure vswitch-controller xmpp-server vsd-1.mvdcunit04.us.alcatel-lucent.com
+
+shell hostAdd vsd-1.mvdcdev08.us.alcatel-lucent.com 10.31.45.137
+
+exec ftp://saketkus:tigris@172.21.32.44:/./config-save/test.cfg
+exec ftp://saketkus:tigris@10.53.112.101:/./config-save/test.cfg
+exec ftp://saketkus:tigris@135.227.222.26:/./config-save/test.cfg         ========> VM (saket-vrs)
+
+
+New certificate Generation:
+========================================================
+waitForLinuxSimsAfterReboot
+dcOvsAclConfigBasicSetup
+VSDEncryptModeModify -vsd 1 -mode allow
+mplsSleep 180
+generateCertsOnVSD -vsd 1 -vsc G -action generate
+VSCOpenFlowTls -vsc G -action config
+
+
+
+CNA Setup:
+==========================================================
+Bring up Gash using latest images:
+gash -xmppServerIp 10.31.41.78 -xmppServerHostName vsd-1.mvdcunit04.us.alcatel-lucent.com
+
+waitForLinuxSimsAfterReboot
+
+info body <proc_name>
+
+DcSwGwResiliency:
+    SwGwResSetup
+    SwGwResCleanup
+
+DcOvsMirroring:  
+    configureMirrorSetup
+    configureMirrorCleanup
+
+dvrsBasic: 
+    configureDvrsSetup -trafficTest false -numVmPerSubnet 1
+    deconfigureDvrsSetup -trafficTest false
+
+set cnaSimNode cna-1
+set xmppServer "$cnaSimNode.[exec hostname].us.alcatel-lucent.com"
+set xmppServerAddr [$cnaSimNode getIp breth0]
+set cnaSimGateway "true"
+global env
+set cnaSimTmplPath $env(HOME)/ws/gash/tools/CNA-Simulator/xml
+cnaSim start -cnaSim $cnaSimNode -xmppSvr $cnaSimNode -cnaSimTmplPath $cnaSimTmplPath -cnaSimGateway $cnaSimGateway
+
+All this gets configured on dut-G.
+Do an admin save on dut-G and on dut-H. Then load your image on the dut and reboot.
+
+Once it comes up with your image, execute the following on the controller. Also add these lines in dut-g.cfg and dut-h.cfg (images folder).
+
+shell hostAdd cna-1.mvdcunit04.us.alcatel-lucent.com 10.31.41.58
+configure vswitch-controller xmpp-server cna-1.mvdcunit04.us.alcatel-lucent.com
+shell tim_xmpp_ignore_version 1
+shell nvcEnableCnaSimSupport 1
+shell tim_xmpp_print_xml_request 1
+shell tim_xmpp_print_xml_response 1
+
+On Ovs:
+    virsh destroy <vm>
+    virsh undefine <vm>
+    scp saketkus@135.227.144.239:save/xml/mvdcunit04-1-vm1_req.xml .
+
+Any cna related errors are logged in /tmp/cnaSim.log. To see this log in to the cna (get ip from images/esrcalls.tcl) (root:tigris) and execute:
+
+[root@cna-1 ~]# cd /tmp/
+[root@cna-1 tmp]# tail -f cnaSim.log
+
+
+If CNA crashes:
+---------------------------
+before running gash Setup enable the request and response on Dut:
+shell tim_xmpp_print_xml_request 1
+shell tim_xmpp_print_xml_response 1
+
+capture the <VirtualMachine> response and try to map the response to one of your vm1.xml.
+Launch a vm with this xml with the following tags inserted to replace the values in one of the template responses present in CNA xml.
+
+Use this vm1.xml to define and start the VM and you should be getting the CNA response on Dut. 
+
+shell hostAdd vsd-1.mvdcdev08.us.alcatel-lucent.com 10.31.45.137
+
+debug vswitch-controller policy
+debug vswitch-controller vswitches
+debug vswitch-controller services
+debug vswitch-controller rtm
+
+shell nvcLoggerSet 0
+shell traceLimitDisable
+shell traceEnable
+shell tim_xmpp_logger_set 0
+shell tim_xmpp_set_debug 1 1
+shell tracepointSet DC_XMPP
+
+shell tracepointClearAll
+shell traceDisable
+
+shell hostAdd vsd-1.mvdcunit01.us.alcatel-lucent.com 10.31.40.53
+shell hostAdd vsd-1.mvdcunit02.us.alcatel-lucent.com 10.31.40.98
+shell hostAdd vsd-1.mvdcunit03.us.alcatel-lucent.com 10.31.40.143
+shell hostAdd vsd-1.mvdcunit04.us.alcatel-lucent.com 10.31.41.78
+shell hostAdd vsd-1.mvdcdev10.us.alcatel-lucent.com 10.31.38.16
+shell hostAdd vsd-1.mvdcdev49.us.alcatel-lucent.com 10.31.35.51
+
+
+shell hostAdd vsd-1.mvdcunit04.us.alcatel-lucent.com 10.31.41.78
+
+Aravind VSD Private Image:
+--------------------------------------
+shell hostAdd host-100-254.openstacklocal 10.31.100.254
+configure log log-id 20
+from debug-trace
+to console
+exit all
+
+
+configure log log-id 22
+from debug-trace
+to session
+exit all
+configure vswitch-controller no shutdown
+
+debug vswitch-controller services
+
+debug vswitch-controller vswitches
+debug vswitch-controller policy
+
+
+kernel
+appGrpDbg=1
+
+no debug
+shell tim_xmpp_print_xml_request 0
+shell tim_xmpp_print_xml_response 0
+
+debug vswitch-controller vswitches
+debug vswitch-controller policy
+debug vswitch-controller services
+shell tim_xmpp_print_xml_request 1
+shell tim_xmpp_print_xml_response 1
+
+sudo ovs-vsctl del-controller alubr0 ctrl1
+sudo ovs-vsctl add-controller alubr0 ctrl1 tcp:10.31.101.7:6633 
+sudo ovs-vsctl set c ctrl1 config_role=master
+
+vsd-1.mvnsghw03.us.alcatel-lucent.com 10.31.49.184
+
+shell hostAdd vsd-1.mvdcunit04.us.alcatel-lucent.com 10.31.41.78
+ovs-vsctl add-controller alubr0 ctrl1 tcp:10.31.41.76:6633 
+ovs-vsctl set c ctrl1 config_role=master
+
+
+nuage-perfmon-config Create_Application '{"app_id":"4b0f9f27-78e3-4b6b-abd6-4d0c88df8e4b","app_name":"Default Monitor Scope Application","bandwidth":0,"dest_ip":"*","dest_port":"*","enable_first_packet_detection":"false","enable_pps":"true","l4_prot":"*","l7_guid":"*","optimize_path_selection":"loss","scopes":[],"src_ip":"*","src_port":"*"}'
+
+nuage-perfmon-config Create_NPM_Application_Group '{"npm_id":"2cd8d5c8-e153-4c92-857f-cf8e732f8b62","npm_name":"Dbg Npm1","npm_scopes":["7350e4e6-c4fc-4a56-843c-f849ecf66e54"],"probe_id":"6350e4e6-c4fc-4a56-843c-f849ecf66e54"}'
+
+scp -r ovs-5@135.227.146.142:~/nsg/ .
+
+nuage-perfmon-config Create_Application '{"bandwidth":0,"dst_ip":"*","dst_port":["11-20"],"enable_pps":"true","id":"8e6a5c32-e9c5-4a3b-b130-41fed756ae3d","jitter":-1,"l4_prot":"*","l7_guid":"FACEBOOK","latency":-1,"name":"DbgApp1","opt_path_sel":"no_opt","pkt_loss":-1,"pre_classify_path":"PRIMARY","scopes":[],"src_ip":["10.10.0.0-10.10.0.10"],"src_port":["1-10"],"trigger":"first_packet"}'
+shell hostAdd vsd-1.mvdcdev46.us.alcatel-lucent.com 10.31.33.80
+
+dcregnsg mvdcdev27 -vrs 0.0/current -vsd 0.0/current -useimages dctor/0.0/PR381
+regress -testbed mvdcdev17 -physTopology nsg -platform dctor -priority P1 -runSuite nsg_dpi -vrs 0.0/current -vsd 0.0/current -customRepo msrivats/gash:msrivats-pps -cvs_tag TiMOS-DC_0_0 -runLevel regular -useimages dctor/0.0/PR381
+./regress -testbed mvdcdev41 -platform dctor -subTopology dctorOvs -cvs_tag TiMOS-DC_0_0 -priority P1 -runLevel regular -emailMode fail -TUNNEL_TYPE VXLAN -srosMemLeakChk true -FIP_WO_PE true -ACL_LOGGING false -valgrind true -VRS_LIST 3 -RG_LIST {1 2} -ACL_TYPE REGULAR -enableStats true -VSG_LIST NONE -runTest e2e_l3_general_events_low_scale_flexi -useimages dctor/0.0/PR381 -vrs 0.0/current -vsd 0.0/current -sanityRun true
+
+(void *)"Enable/Disable Error Handling"
+
+Allow intermediate Node:
+config>router>bgp>group>error-handling
+
+(void *)"Enable/Disable update-fault-tolerance"
+cliConfigRouterBgpErrHndlNoUpdateFaultTolerance
+
+update-fault-tolerance
+status = cliBgpErrHndlUpFaultTolerance(pCliEnv, pVal, RTR_NAME, TRUE);
+
+no update-fault-tolerance
+status = cliBgpErrHndlUpFaultTolerance(pCliEnv, pVal, RTR_NAME, FALSE)
+
+GROUP:
+cliConfigRouterBgpPGErrHndlNoFaultTolerance
+status = cliBgpPGErrHndlUpdateFaultTolerance(pCliEnv, pVal1, RTR_NAME, pVal2, FALSE);
+tBgpPGFaultTolerance
+
+Group Neighbor:
+cliConfRouterBgpPGNeighborErrHndlNoUpFaultTolerance
+status = cliBgpPeerErrHndlUpFaultTolerance(pCliEnv, pVal1, RTR_NAME, pVal2, pVal3, FALSE);
+tBgpPeerNgFaultTolerance
+
+flowCollectionEnabled
+
+status = showVswitchCntlrGwNatMappings(pCliEnv, pVal1);
+status = showVSwitchCntlrVSwitchDetail(pCliEnv, pVal1, pVal2, pVal4);
+status = showVSwitchCntlrVSwitchOFExpstats(pCliEnv, pVal1, pVal2, pVal5);
+status = showVSwitchCntlrVSwitchOFstats(pCliEnv, pVal1, pVal2, pVal4);
+status = showVswitchCntlrGwNatMappings(pCliEnv, pVal1, pVal3);
+
+
+telnet 172.22.24.231 2019
+telnet 172.22.24.231 2026
+
+
+Reboot Dut on VTB testbed:
+------------------------------------------------------------------------
+echo -n reset dut-g | nc -U /var/run/powervirtd
+
+
+shell hostAdd vsd-1.mvdcvtb10.mv.nuagenetworks.net 10.31.231.136
+
+shell hostAdd vsd-1.mvdcvtb23.mv.nuagenetworks.net 10.31.62.67
+
+
+
+
+E2E Setup Port resolve: 
+======================================
+
+e2eVmActionOnOvsList -ovsList 2 -action sendStartEvent
+OR
+e2eVmActionOnOvsList -ovsList 2 -action undefine;e2eVmActionOnOvsList -ovsList 2 -action define; e2eVmActionOnOvsList -ovsList 2 -action sendStartEvent
+
+shell nvcLoggerSet 0
+shell traceEnable
+shell traceLimitDisable
+shell hostAdd vsd-1.mvdcvtb56.mv.nuagenetworks.net 10.31.237.130
+
+
+PYGASH:
+=====================================
+source /tmp/pygash/bin/activate
+cd ~/ws/pygash/testsuites/
+pygash --data-dir data/unit
+import pygash
+
+layer = pygash.runTest('nsg.test_vms')
+
+
+
+

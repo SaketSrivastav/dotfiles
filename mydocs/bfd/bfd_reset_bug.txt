@@ -1,0 +1,543 @@
+nvcProcessRtmNhEvent
+*A:Dut-G# 
+6460 2018/08/09 00:09:00.12 UTC MINOR: DEBUG #2001 Base NVC
+"NVC: nvcSvcProcessPlcyUpdEvent
+SVC update for seq_num 1533773340097 nodeType 0 nodeId 661805132 service ID 6618
+05132 gwAddr :: level 14 numMetadataIds 0 type 0 num of affected services 0 affe
+cted uuids 0num of affected ids 0 vsd vsd-1.mvdcvtb08.us.alcatel-lucent.com"
+
+6461 2018/08/09 00:09:00.12 UTC MINOR: DEBUG #2001 Base NVC
+"NVC: nvcSvcProcessPlcyUpdEvent
+Push received for SVC ID 661805132, level 14"
+
+6462 2018/08/09 00:09:00.13 UTC MINOR: DEBUG #2001 Base NVC
+"NVC: nvcPlcyDomainCfgReqSchedule
+Bumping up2 seq# for pReq(0xd7d16100) currseqNum 0 "
+
+6463 2018/08/09 00:09:00.13 UTC MINOR: DEBUG #2001 Base NVC
+"NVC: nvcPlcyXmppCreateAndSend
+Sent NVC_PLCY_REQ_DOMAIN_CFG vca(661805132) seqNum(871) svc-id(661805132)"
+
+6464 2018/08/09 00:09:00.15 UTC MINOR: DEBUG #2001 Base NVC
+"NVC: nvcPlcyXmppResCallback
+Received XMPP domain config resp with userdata 0xd7d16100"
+
+6465 2018/08/09 00:09:00.15 UTC MINOR: DEBUG #2001 Base NVC
+"NVC: nvcPlcyProcessDomAppGrpBindingsResp
+Processing 0 application group bindings"
+
+6466 2018/08/09 00:09:00.15 UTC MINOR: DEBUG #2001 Base NVC
+"NVC: nvcPlcyProcessDomNpmBindingsResp
+Processing 0 npm bindings"
+
+6467 2018/08/09 00:09:00.15 UTC MINOR: DEBUG #2001 Base NVC
+"NVC: nvcPlcyProcessVrf
+tunnel type VXLAN dhcp behavior CONSUME L3RD 65534:23442 L3RT 65534:8520 SVC 661
+805132 Seq Num 1533773340097 CUST 1941595488 numL2Services 0"
+
+6468 2018/08/09 00:09:00.15 UTC MINOR: DEBUG #2001 Base NVC
+"NVC: nvcPlcyGetUplinkRds
+Num Uplink RDs: 4"
+
+6469 2018/08/09 00:09:00.15 UTC MINOR: DEBUG #2001 Base NVC
+"NVC: nvcPlcyGetUplinkRds
+Uplink RD: Type RDPrimary1 RD 65534:581"
+
+6470 2018/08/09 00:09:00.15 UTC MINOR: DEBUG #2001 Base NVC
+"NVC: nvcPlcyGetUplinkRds
+Uplink RD: Type RDSecondary2 RD 65534:1610"
+
+6471 2018/08/09 00:09:00.15 UTC MINOR: DEBUG #2001 Base NVC
+"NVC: nvcPlcyGetUplinkRds
+Uplink RD: Type RDSecondary1 RD 65534:5139"
+
+6472 2018/08/09 00:09:00.15 UTC MINOR: DEBUG #2001 Base NVC
+"NVC: nvcPlcyGetUplinkRds
+Uplink RD: Type RDPrimary2 RD 65534:53066"
+
+6473 2018/08/09 00:09:00.15 UTC MINOR: DEBUG #2001 Base NVC
+"NVC: nvcPlcyProcessVrf
+BH-RD 65534:17861 BH-RT 65534:7461 SVC 1681894347"
+
+6474 2018/08/09 00:09:00.15 UTC MINOR: DEBUG #2001 Base NVC
+"NVC: nvcPlcyProcessVrf
+L3RD 65534:23442 L3RT 65534:8520 Public SVC 661805132 Seq Num 1533773340097 CUST
+ 1941595488 numL2Services 0 underlay false underlay_enabled DISABLED hub false"
+
+6475 2018/08/09 00:09:00.15 UTC MINOR: DEBUG #2001 Base NVC
+"NVC: nvcPlcyProcessVrf
+BH-RD 65534:17861 BH-RT 65534:7461 SVC 1681894347"
+
+6476 2018/08/09 00:09:00.15 UTC MINOR: DEBUG #2001 Base NVC
+"NVC: nvcPlcyBuildAclSet
+Num ACL entries 0 aclType 5"
+
+6477 2018/08/09 00:09:00.15 UTC MINOR: DEBUG #2001 Base NVC
+"NVC: nvcPlcyProcessDomainResp
+Number of FIP Acl entries 0 for svc 661805132"
+
+6478 2018/08/09 00:09:00.16 UTC MINOR: DEBUG #2001 Base NVC
+"NVC: nvcPlcyProcessXmppDomainCfgResponse
+Received XMPP domain config response pReq(0xd7d16100) delPending(0) xmppRetStatu
+s(1)"
+
+6479 2018/08/09 00:09:00.16 UTC MINOR: DEBUG #2001 Base NVC
+"NVC: nvcSvcProcessDomainMsg
+svcId: 661805132 domainSeqNum 1533773340104 vlanId 0"
+
+6480 2018/08/09 00:09:00.16 UTC MINOR: DEBUG #2001 Base NVC
+"NVC: nvcPlcyNsgSetReqSchedule
+Bumping up2 seq# for pReq(0xd7b473c8) currseqNum 0 "
+
+6481 2018/08/09 00:09:00.16 UTC MINOR: DEBUG #2001 Base NVC
+"NVC: nvcPlcyXmppCreateAndSend
+Sent NVC_PLCY_REQ_NSG_SET seqNum(872) svc-id(661805132)"
+
+6482 2018/08/09 00:09:00.16 UTC MINOR: DEBUG #2001 Base NVC
+"NVC: nvcPlcyObjReqSchedule
+Bumping up2 seq# for pReq(0xd7d6b628) currseqNum 0 "
+
+6483 2018/08/09 00:09:00.16 UTC MINOR: DEBUG #2001 Base NVC
+"NVC: nvcPlcyXmppCreateAndSend
+Sent ACL security info req 23 seqNum(873) uuid(<NULL>)"
+
+6484 2018/08/09 00:09:00.16 UTC MINOR: DEBUG #2001 Base NVC
+"NVC: nvcPlcyObjReqSchedule
+Bumping up2 seq# for pReq(0xd7c29e20) currseqNum 0 "
+
+6485 2018/08/09 00:09:00.16 UTC MINOR: DEBUG #2001 Base NVC
+"NVC: nvcPlcyXmppCreateAndSend
+Sent ACL security info req 23 seqNum(874) uuid(<NULL>)"
+
+6486 2018/08/09 00:09:00.16 UTC MINOR: DEBUG #2001 Base NVC
+"NVC: nvcSvcProcessDomainMsg
+hubdomainRDs 0 0 0 0 0 0 0 0"
+
+6487 2018/08/09 00:09:00.16 UTC MINOR: DEBUG #2001 Base NVC
+"NVC: nvcSvcUpdateStaticRoutes
+numStaticRoutes 1"
+
+6488 2018/08/09 00:09:00.16 UTC MINOR: DEBUG #2001 Base NVC
+"NVC: nvcSvcUpdateStaticRoutes
+Prefix 50.0.0.0/8 pSvc DVRS VXLAN:661805132:1941595488:2:65534:23442:target:6553
+4:8520 import:target:65534:8520 export:target:65534:8520(0xd7b42b30) existingRou
+te 0xd7b45d00"
+
+6489 2018/08/09 00:09:00.16 UTC MINOR: DEBUG #2001 Base NVC
+"NVC: nvcSvcUpdateStaticRoutes
+pMsg numNextHops 1 pStaticRt numNextHops 1"
+
+6490 2018/08/09 00:09:00.16 UTC MINOR: DEBUG #2001 Base NVC
+"NVC: nvcStaticRouteUpdate
+Update(49) VRF 50.0.0.0 pStaticRt(DVRS VXLAN:661805132:1941595488:2:65534:23442:
+target:65534:8520 import:target:65534:8520 export:target:65534:8520/8) numNextHo
+ps 1 pMsg numNextHops 1 isLeaked 0 vsdRtType 0"
+
+6491 2018/08/09 00:09:00.16 UTC MINOR: DEBUG #2001 Base NVC
+"NVC: nvcStaticRouteUpdate
+pMsg(49) nexthop[0] 41.1.1.100-65534:42743 pStaticRt(48) nexthop[0] 41.1.1.100-6
+5534:42743"
+
+6492 2018/08/09 00:09:00.16 UTC MINOR: DEBUG #2001 Base NVC
+"NVC: nvcStaticRouteUpdate
+pStaticRt(48) nexthop[0] 41.1.1.100-65534:42743 delete?yes"
+
+6493 2018/08/09 00:09:00.16 UTC MINOR: DEBUG #2001 Base NVC
+"NVC: nvcStaticRouteDelFromNextHop
+Static Route DEL 50.0.0.0/8 from nexthop 41.1.1.100 numRoutes 1"
+
+6494 2018/08/09 00:09:00.16 UTC MINOR: DEBUG #2001 Base NVC
+"NVC: nvcSvcNextHopDelete1
+Deleting NextHop 41.1.1.100 0.0.0.0 SVC(0xd7b42b30)661805132"
+
+6495 2018/08/09 00:09:00.16 UTC MINOR: DEBUG #2001 Base NVC
+"NVC: nvcSvcAddDelNextHopToEvpn1
+lookup prefix 41.1.1.100/31 pRtNode 0xd7c67f20"
+
+6496 2018/08/09 00:09:00.16 UTC MINOR: DEBUG #2001 Base NVC
+"NVC: nvcSvcAddDelNextHopToEvpn1
+pNvcRoute 0xd7d4e3d0 prefix 41.1.0.0/16 rtOwner NVC_LOCAL"
+
+6497 2018/08/09 00:09:00.16 UTC MINOR: DEBUG #2001 Base NVC
+"NVC: nvcSvcAddDelNextHopToEvpn1
+delete nexthop 41.1.1.100 nsgId 0.0.0.0 isNextHopInL2SvcDB 1 from l2Svc(0xd7b4b3
+a8) 752714140 "
+
+6498 2018/08/09 00:09:00.16 UTC MINOR: DEBUG #2001 Base NVC
+"NVC: nvcSvcNextHopDelFromDB
+Deleting nexthop 41.1.1.100(0xd7b485f0) nsgId 0.0.0.0 flag(1) from svc(0xd7b4b3a
+8) 752714140 isL3 0 nexthop DB"
+
+6499 2018/08/09 00:09:00.16 UTC MINOR: DEBUG #2001 Base NVC
+"NVC: nvcSvcNextHopDelFromDB
+Deleted ret 0 nexthop 0xd7b485f0 flag 1"
+
+6500 2018/08/09 00:09:00.16 UTC MINOR: DEBUG #2001 Base NVC
+"NVC: nvcSvcAddDelNextHopToEvpn1
+associating pL2Svc 0xd7b4b3a8 id 752714140 arpListUpdateGenId 40 prefix 41.1.254
+.254/16 nsgId 0.0.0.1 isCpe 0 doNotAdvertise 0 with pNextHop 0xd7b485f0 pSbind 0
+xd7b49a30 arpListUpdateGenId 39"
+
+6501 2018/08/09 00:09:00.16 UTC MINOR: DEBUG #2001 Base NVC
+"NVC: nvcSvcAddDelNextHopToEvpn1
+associating pL2Svc 0xd7b4b3a8 id 752714140 arpListUpdateGenId 40 prefix 41.1.254
+.254/16 nsgId 0.0.0.1 isCpe 0 doNotAdvertise 0 with pNextHop 0xd7b485f0 pSbind 0
+xd7e4ccd0 arpListUpdateGenId 39"
+
+6502 2018/08/09 00:09:00.16 UTC MINOR: DEBUG #2001 Base NVC
+"NVC: nvcSvcNextHopDelFromDB
+Deleting nexthop 41.1.1.100(0xd7b485f0) nsgId 0.0.0.0 flag(1) from svc(0xd7b42b3
+0) 661805132 isL3 1 nexthop DB"
+
+6503 2018/08/09 00:09:00.16 UTC MINOR: DEBUG #2001 Base NVC
+"NVC: nvcSvcNextHopDelFromDB
+Deleted ret 0 nexthop 0xd7b485f0 flag 1"
+
+6504 2018/08/09 00:09:00.16 UTC MINOR: DEBUG #2001 Base NVC
+"NVC: nvcStaticRouteUpdate
+nexthop[0] 41.1.1.100-65534:42743 add?yes"
+
+6505 2018/08/09 00:09:00.16 UTC MINOR: DEBUG #2001 Base NVC
+"NVC: nvcSvcNextHopAdd1
+Adding NextHop 41.1.1.100 SVC(0xd7b42b30)661805132"
+
+6506 2018/08/09 00:09:00.16 UTC MINOR: DEBUG #2001 Base NVC
+"NVC: nvcSvcNextHopAddToDB
+Adding nexthop 41.1.1.100(0xd7c37378) 0.0.0.0 flag(0) to svc(0xd7b42b30) id 6618
+05132 nexthop DB"
+
+6507 2018/08/09 00:09:00.16 UTC MINOR: DEBUG #2001 Base NVC
+"NVC: nvcSvcNextHopAddToDB
+DB lookup nexthop 0xd7c37378 nexthop in DB 0x0 svc(0xd7b42b30) id 661805132 retV
+al(-1)"
+
+6508 2018/08/09 00:09:00.16 UTC MINOR: DEBUG #2001 Base NVC
+"NVC: nvcSvcNextHopAddToDB
+Added nexthop 41.1.1.100(0xd7c37378) to svc(0xd7b42b30) 661805132 isL3 1 nexthop
+ DB"
+
+6509 2018/08/09 00:09:00.16 UTC MINOR: DEBUG #2001 Base NVC
+"NVC: nvcRtmHandleNhResEvent
+Received NEW event for svc 661805132 41.1.1.100/32 owner NVC, tracking ip 41.1.1
+.100/32"
+
+6510 2018/08/09 00:09:00.16 UTC MINOR: DEBUG #2001 Base NVC
+"NVC: nvcProcessRtmNhEvent
+(41.1.1.100/32) NH[0] nh 0.136.0.4 vtepAddr 10.15.1.254 outIfId 3 label 0 isDyna
+micHost 1 ignIom 0"
+
+6511 2018/08/09 00:09:00.16 UTC MINOR: DEBUG #2001 Base NVC
+"NVC: nvcProcessRtmNhEvent
+bfd down! NEW event 41.1.1.100/32 owner NVC"
+
+6512 2018/08/09 00:09:00.16 UTC MINOR: DEBUG #2001 Base NVC
+"NVC: nvcSvcAddDelNextHopToEvpn1
+lookup prefix 41.1.1.100/31 pRtNode 0xd7c67f20"
+
+6513 2018/08/09 00:09:00.16 UTC MINOR: DEBUG #2001 Base NVC
+"NVC: nvcSvcAddDelNextHopToEvpn1
+pNvcRoute 0xd7d4e3d0 prefix 41.1.0.0/16 rtOwner NVC_LOCAL"
+
+6514 2018/08/09 00:09:00.16 UTC MINOR: DEBUG #2001 Base NVC
+"NVC: nvcSvcAddDelNextHopToEvpn1
+add: compare prefix 41.1.254.254/16 nsgId 0.0.0.0 with nexthop 41.1.1.100 nsgId 
+0.0.0.0"
+
+6515 2018/08/09 00:09:00.16 UTC MINOR: DEBUG #2001 Base NVC
+"NVC: nvcSvcNextHopAddToDB
+Adding nexthop 41.1.1.100(0xd7c37378) 0.0.0.0 flag(0) to svc(0xd7b4b3a8) id 7527
+14140 nexthop DB"
+
+6516 2018/08/09 00:09:00.16 UTC MINOR: DEBUG #2001 Base NVC
+"NVC: nvcSvcNextHopAddToDB
+DB lookup nexthop 0xd7c37378 nexthop in DB 0x0 svc(0xd7b4b3a8) id 752714140 retV
+al(-1)"
+
+6517 2018/08/09 00:09:00.16 UTC MINOR: DEBUG #2001 Base NVC
+"NVC: nvcSvcNextHopAddToDB
+Added nexthop 41.1.1.100(0xd7c37378) to svc(0xd7b4b3a8) 752714140 isL3 0 nexthop
+ DB"
+
+6518 2018/08/09 00:09:00.16 UTC MINOR: DEBUG #2001 Base NVC
+"NVC: nvcSvcAddDelNextHopToEvpn1
+associating pL2Svc 0xd7b4b3a8 id 752714140 arpListUpdateGenId 41 prefix 41.1.254
+.254/16 nsgId 0.0.0.1 isCpe 0 doNotAdvertise 0 with pNextHop 0xd7c37378 pSbind 0
+xd7b49a30 arpListUpdateGenId 40"
+
+6519 2018/08/09 00:09:00.16 UTC MINOR: DEBUG #2001 Base NVC
+"NVC: nvcSvcAddDelNextHopToEvpn1
+associating pL2Svc 0xd7b4b3a8 id 752714140 arpListUpdateGenId 41 prefix 41.1.254
+.254/16 nsgId 0.0.0.1 isCpe 0 doNotAdvertise 0 with pNextHop 0xd7c37378 pSbind 0
+xd7e4ccd0 arpListUpdateGenId 40"
+
+6520 2018/08/09 00:09:00.16 UTC MINOR: DEBUG #2001 Base NVC
+"NVC: nvcStaticRouteAddToNextHop
+Static Route ADD 50.0.0.0/8 to static route DB of next hop 41.1.1.100 numRoutes 
+1 numBfdEnabledRoutes 0"
+
+6521 2018/08/09 00:09:00.16 UTC MINOR: DEBUG #2001 Base NVC
+"NVC: nvcStaticRouteUpdateNextHops
+Updating Static Route 50.0.0.0/8 type 0 numNextHops 1"
+
+6522 2018/08/09 00:09:00.16 UTC MINOR: DEBUG #2001 Base NVC
+"NVC: nvcStaticRouteUpdateNextHops
+NH[0] pNextHop 0xd7c37378 addr 41.1.1.100 active 0 numNextHops 0"
+
+6523 2018/08/09 00:09:00.16 UTC MINOR: DEBUG #2001 Base NVC
+"NVC: nvcStaticRouteUpdate
+Static Route MODIFY 50.0.0.0/8 to static route DB of L3 SVC 661805132"
+
+6524 2018/08/09 00:09:00.16 UTC MINOR: DEBUG #2001 Base NVC
+"NVC: nvcSvcUpdateStaticRoutes
+Prefix 50.0.0.0/8 pSvc DVRS VXLAN:661805132:1941595488:2:65534:23442:target:6553
+4:8520 import:target:65534:8520 export:target:65534:8520(0xd7b42b30) rt genId nv
+c 80 genId 80"
+
+6525 2018/08/09 00:09:00.16 UTC MINOR: DEBUG #2001 Base NVC
+"NVC: nvcSvcProcessDomainMsg
+Svc ACL UUID 00000000-0000-0000-0000-000000000000, msg ACL UUID 00000000-0000-00
+00-0000-000000000000"
+
+6526 2018/08/09 00:09:00.16 UTC MINOR: DEBUG #2001 Base NVC
+"NVC: nvcSvcProcessBgpDomainMsg
+Process domain config msg: Policy num: 0 msg Policy num: 0. Counts: new Policy: 
+0, existing: 0, update: 0, del: 0, update flag: 0"
+
+6527 2018/08/09 00:09:00.16 UTC MINOR: DEBUG #2001 Base NVC
+"NVC: nvcSvcProcessNpmDomainMsg
+Processing 0 NPMs for Domain(0xd7b42b30) 661805132 in pMsg 0xd7c603e8"
+
+6528 2018/08/09 00:09:00.16 UTC MINOR: DEBUG #2001 Base NVC
+"NVC: nvcPlcySetTimer
+Reset plcy timer pSvc(0xd7b42b30) 661805132 to 1459"
+
+6529 2018/08/09 00:09:00.16 UTC MINOR: DEBUG #2001 Base NVC
+"NVC: nvcPduDump
+TX PDU, VCA 10.15.1.254:Version: 0x01 Type: EXPERIMENTER Length: 160 XID: 1892(0
+x764)
+Vendor: ALU, subType(0): FLOW MOD
+NumFlows: 1 svcId 0
+Type: VIP FIP LIST Command ADD flags 0x42000, prio 0
+Flow[0]: VM VIP:ADD numEntries: 0 num6Entries: 0
+         Type VM UUID: 00000000-0000-0000-0000-000000000000, uuidBitLength 0 pla
+tformType 0 Port:  VIP EVPN ARP List
+         EVPN ID 752714140
+"
+
+6530 2018/08/09 00:09:00.16 UTC MINOR: DEBUG #2001 Base NVC
+"NVC: nvcRtmHandleNhResEvent
+Received NEW event for svc 661805132 41.1.1.100/32 owner NVC, tracking ip 41.1.1
+.100/32"
+
+6531 2018/08/09 00:09:00.16 UTC MINOR: DEBUG #2001 Base NVC
+"NVC: nvcProcessRtmNhEvent
+(41.1.1.100/32) NH[0] nh 0.136.0.4 vtepAddr 10.15.1.254 outIfId 3 label 0 isDyna
+micHost 1 ignIom 0"
+
+6532 2018/08/09 00:09:00.16 UTC MINOR: DEBUG #2001 Base NVC
+"NVC: nvcProcessRtmNhEvent
+bfd down! NEW event 41.1.1.100/32 owner NVC"
+
+6533 2018/08/09 00:09:00.16 UTC MINOR: DEBUG #2001 Base NVC
+"NVC: nvcPduDump
+TX PDU, VCA 10.15.1.254:Version: 0x01 Type: EXPERIMENTER Length: 168 XID: 1893(0
+x765)
+Vendor: ALU, subType(0): FLOW MOD
+NumFlows: 1 svcId 0
+Type: VIP FIP LIST Command ADD flags 0x42000, prio 0
+Flow[0]: VM VIP:ADD numEntries: 1 num6Entries: 0
+         Type VM UUID: 00000000-0000-0000-0000-000000000000, uuidBitLength 0 pla
+tformType 0 Port:  VIP EVPN ARP List
+         VIP[0]: VIP 41.1.1.100 Mac                   Flags 0x0
+
+         EVPN ID 752714140
+"
+
+6534 2018/08/09 00:09:00.16 UTC MINOR: DEBUG #2001 Base NVC
+"NVC: nvcProcessNhUpd
+pNextHop 0xd7c37378 pCurStaticRt 0xd7d57020 pCurStatic6Rt 0x0 pCurBgpOvsRt 0x0 p
+CurLeakRt 0x0 pCurLeakLportRt 0x0 pCurOatMapNode 0x0"
+
+6535 2018/08/09 00:09:00.16 UTC MINOR: DEBUG #2001 Base NVC
+"NVC: nvcStaticRouteUpdateNextHops
+Updating Static Route 50.0.0.0/8 type 0 numNextHops 1"
+
+6536 2018/08/09 00:09:00.16 UTC MINOR: DEBUG #2001 Base NVC
+"NVC: nvcStaticRouteUpdateNextHops
+NH[0] pNextHop 0xd7c37378 addr 41.1.1.100 active 0 numNextHops 0"
+
+6537 2018/08/09 00:09:00.18 UTC MINOR: DEBUG #2001 Base NVC
+"NVC: nvcPlcyXmppResCallback
+Received XMPP NSG set resp with userdata 0xd7b473c8"
+
+6538 2018/08/09 00:09:00.18 UTC MINOR: DEBUG #2001 Base NVC
+"NVC: nvcPlcyProcessNsgSetResp
+setLast  msgLast "
+
+6539 2018/08/09 00:09:00.18 UTC MINOR: DEBUG #2001 Base NVC
+"NVC: nvcPlcyProcessXmppNsgSetResponse
+Received XMPP domain nsg set response pReq(0xd7b473c8) delPending(0) xmppRetStat
+us(1)"
+
+6540 2018/08/09 00:09:00.18 UTC MINOR: DEBUG #2001 Base NVC
+"NVC: nvcNsgSetProcessPlcyMsg
+pSet 0xd7b43d10 svc 661805132(0xd7b42b30) msgSeqNum 872 nsgSetSeqNum 15337733401
+87 more 0 setCount  0 setIndex 0 setFirst 0 setLast  numNsgs 0 numCurrNsgs 0"
+
+6541 2018/08/09 00:09:00.21 UTC MINOR: DEBUG #2001 Base NVC
+"NVC: nvcPlcyXmppResCallback
+Received XMPP Security ACL resp type 32 with userdata 0xd7c29e20"
+
+6542 2018/08/09 00:09:00.21 UTC MINOR: DEBUG #2001 Base NVC
+"NVC: nvcPlcyObjInit
+ Inited plcy Obj for 0xd7c1b718 type 18 pHandle 0xd7c1b240 activate 1"
+
+6543 2018/08/09 00:09:00.21 UTC MINOR: DEBUG #2001 Base NVC
+"NVC: nvcPlcyObjReqSchedule
+Bumping up2 seq# for pReq(0xd7c59018) currseqNum 0 "
+
+6544 2018/08/09 00:09:00.21 UTC MINOR: DEBUG #2001 Base NVC
+"NVC: nvcPlcyObjInit
+ Inited plcy Obj for 0xd7c509c0 type 18 pHandle 0xd7c504e8 activate 1"
+
+6545 2018/08/09 00:09:00.21 UTC MINOR: DEBUG #2001 Base NVC
+"NVC: nvcPlcyObjInit
+ Inited plcy Obj for 0xd7c6c1e0 type 18 pHandle 0xd7c6bd08 activate 1"
+
+6546 2018/08/09 00:09:00.21 UTC MINOR: DEBUG #2001 Base NVC
+"NVC: nvcPlcyObjReqSchedule
+Bumping up2 seq# for pReq(0xd7c15e18) currseqNum 0 "
+
+6547 2018/08/09 00:09:00.21 UTC MINOR: DEBUG #2001 Base NVC
+"NVC: nvcPlcyXmppResCallback
+Received XMPP Security ACL resp type 31 with userdata 0xd7d6b628"
+
+6548 2018/08/09 00:09:00.21 UTC MINOR: DEBUG #2001 Base NVC
+"NVC: nvcPlcyObjInit
+ Inited plcy Obj for 0xd7b30300 type 18 pHandle 0xd7b2fe28 activate 1"
+
+6549 2018/08/09 00:09:00.21 UTC MINOR: DEBUG #2001 Base NVC
+"NVC: nvcPlcyObjReqSchedule
+Bumping up2 seq# for pReq(0xd7c4d2b8) currseqNum 0 "
+
+6550 2018/08/09 00:09:00.21 UTC MINOR: DEBUG #2001 Base NVC
+"NVC: nvcPlcyObjInit
+ Inited plcy Obj for 0xd7b3ef18 type 18 pHandle 0xd7b3ea40 activate 1"
+
+6551 2018/08/09 00:09:00.21 UTC MINOR: DEBUG #2001 Base NVC
+"NVC: nvcPlcyObjInit
+ Inited plcy Obj for 0xd7d05220 type 18 pHandle 0xd7d04d48 activate 1"
+
+6552 2018/08/09 00:09:00.21 UTC MINOR: DEBUG #2001 Base NVC
+"NVC: nvcPlcyObjReqSchedule
+Bumping up2 seq# for pReq(0xd7d63220) currseqNum 0 "
+
+6553 2018/08/09 00:09:00.27 UTC MINOR: DEBUG #2001 Base NVC
+"NVC: nvcPlcyXmppResCallback
+Received XMPP ACL Template resp type 28 with userdata 0xd7c59018"
+
+6554 2018/08/09 00:09:00.27 UTC MINOR: DEBUG #2001 Base NVC
+"NVC: nvcPlcyBuildDomainAclSet
+Num ACL entries 2"
+
+6555 2018/08/09 00:09:00.27 UTC MINOR: DEBUG #2001 Base NVC
+"NVC: nvcPlcyBuildDomainAclSource
+Plcy Src type NETWORK"
+
+6556 2018/08/09 00:09:00.27 UTC MINOR: DEBUG #2001 Base NVC
+"NVC: nvcPlcyBuildDomainAclEntry
+Acl: redirect to name() service id  esi()"
+
+6557 2018/08/09 00:09:00.27 UTC MINOR: DEBUG #2001 Base NVC
+"NVC: nvcPlcyBuildDomainAclSource
+Plcy Src type NETWORK"
+
+6558 2018/08/09 00:09:00.28 UTC MINOR: DEBUG #2001 Base NVC
+"NVC: nvcPlcyBuildDomainAclEntry
+Acl: redirect to name() service id  esi()"
+
+6559 2018/08/09 00:09:00.28 UTC MINOR: DEBUG #2001 Base NVC
+"NVC: nvcPlcyXmppResCallback
+Received XMPP ACL Template resp type 27 with userdata 0xd7c4d2b8"
+
+6560 2018/08/09 00:09:00.27 UTC MINOR: DEBUG #2001 Base NVC
+"NVC: nvcPlcyBuildDomainAclSet
+Num ACL entries 2"
+
+6561 2018/08/09 00:09:00.27 UTC MINOR: DEBUG #2001 Base NVC
+"NVC: nvcPlcyBuildDomainAclSource
+Plcy Src type NETWORK"
+
+6562 2018/08/09 00:09:00.27 UTC MINOR: DEBUG #2001 Base NVC
+"NVC: nvcPlcyBuildDomainAclEntry
+Acl: redirect to name() service id  esi()"
+
+6563 2018/08/09 00:09:00.27 UTC MINOR: DEBUG #2001 Base NVC
+"NVC: nvcPlcyBuildDomainAclSource
+Plcy Src type NETWORK"
+
+6564 2018/08/09 00:09:00.27 UTC MINOR: DEBUG #2001 Base NVC
+"NVC: nvcPlcyBuildDomainAclEntry
+Acl: redirect to name() service id  esi()"
+
+6565 2018/08/09 00:09:00.28 UTC MINOR: DEBUG #2001 Base NVC
+"NVC: nvcPlcyXmppResCallback
+Received XMPP ACL Template resp type 28 with userdata 0xd7c15e18"
+
+6566 2018/08/09 00:09:00.28 UTC MINOR: DEBUG #2001 Base NVC
+"NVC: nvcPlcyBuildDomainAclSet
+Num ACL entries 5"
+
+6567 2018/08/09 00:09:00.28 UTC MINOR: DEBUG #2001 Base NVC
+"NVC: nvcPlcyBuildDomainAclSource
+Plcy Src type NETWORK"
+
+6568 2018/08/09 00:09:00.28 UTC MINOR: DEBUG #2001 Base NVC
+"NVC: nvcPlcyBuildDomainAclEntry
+Acl: redirect to name() service id  esi()"
+
+6569 2018/08/09 00:09:00.28 UTC MINOR: DEBUG #2001 Base NVC
+"NVC: nvcPlcyBuildDomainAclSource
+Plcy Src type NETWORKPOLICYGROUP"
+
+6570 2018/08/09 00:09:00.28 UTC MINOR: DEBUG #2001 Base NVC
+"NVC: nvcPlcyBuildDomainAclSource
+PG Type  Network PG type ENDPOINT_DOMAIN currType 0"
+
+6571 2018/08/09 00:09:00.28 UTC MINOR: DEBUG #2001 Base NVC
+"NVC: nvcPlcyBuildDomainAclSource
+Network PG domainId 0 vportPgId "
+
+6572 2018/08/09 00:09:00.28 UTC MINOR: DEBUG #2001 Base NVC
+"NVC: nvcPlcyBuildDomainAclEntry
+Acl: redirect to name() service id  esi()"
+
+6573 2018/08/09 00:09:00.28 UTC MINOR: DEBUG #2001 Base NVC
+"NVC: nvcPlcyBuildDomainAclSource
+Plcy Src type NETWORK"
+
+6574 2018/08/09 00:09:00.28 UTC MINOR: DEBUG #2001 Base NVC
+"NVC: nvcPlcyBuildDomainAclEntry
+Acl: redirect to name() service id  esi()"
+
+6575 2018/08/09 00:09:00.29 UTC MINOR: DEBUG #2001 Base NVC
+"NVC: nvcPlcyBuildDomainAclSource
+Plcy Src type "
+
+6576 2018/08/09 00:09:00.28 UTC MINOR: DEBUG #2001 Base NVC
+"NVC: nvcPlcyBuildDomainAclEntry
+Acl: redirect to name() service id  esi()"
+
+6577 2018/08/09 00:09:00.28 UTC MINOR: DEBUG #2001 Base NVC
+"NVC: nvcPlcyBuildDomainAclSource
+Plcy Src type "
+
+6578 2018/08/09 00:09:00.29 UTC MINOR: DEBUG #2001 Base NVC
+"NVC: nvcPlcyBuildDomainAclEntry
+Acl: redirect to name() service id  esi()"
+
+6579 2018/08/09 00:09:00.28 UTC MINOR: DEBUG #2001 Base NVC
+"NVC: nvcPlcyObjCleanup
+ Cleaning up plcy obj 0xd7c509c0 pReq 0x0 type 18 pHandle 0xd7c504e8 active 1"
+
+6580 2018/08/09 00:09:00.28 UTC MINOR: DEBUG #2001 Base NVC

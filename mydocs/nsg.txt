@@ -1,0 +1,11 @@
+NSG Pass: EU4eEKj97J , pKzKMMAq5W, eWsDU5WM6d
+NSG-1: 10.15.1.254
+NSG-2: 10.15.3.254
+NSG-3: 10.15.33.254
+NSG-4: 10.15.2.254
+
+sed -i s/PERSONALITY=vrs/PERSONALITY=vrs-g/ /etc/default/openvswitch
+grep "PERSONALITY=vrs" /etc/default/openvswitch
+nuage-vlan-config mod eth0 access 1-300
+sed -i s/#\ ACTIVE_CONTROLLER=/ACTIVE_CONTROLLER=10.31.40.96/g /etc/default/openvswitch
+grep "ACTIVE_CONTROLLER=" /etc/default/openvswitch

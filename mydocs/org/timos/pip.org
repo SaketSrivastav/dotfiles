@@ -1,0 +1,12 @@
+* PIP
+** packet hit cpm and then pchip receives packet and figures which queue to forward to in qchip. The qchip then forwards the packet using DMA to debug pools(hello pkts, ctrl packets, etc). There are multiple pools so that ospf hello pkts do not overwhelm bgp.
+** PIP deleivers packets to OSPF, RSVP, vxWorks etc. pipIpTask, is the task that does this.
+** pBuf: linux uses pBuf. pBuf is a big flat memory with 10K chunks. mBuf is a chained buffer.
+* VxWorks and TiMOS:
+** Interface CMP goes from TiMOS to VxWorks (control). Mgmt interface goes directly to VxWorks
+** Router interfaces are owned by TiMOS. There is no one to one mapping with VxWorks interface. TiMOS handles 16 interfaces but vxWorks cannot handle that many. VxWorks needs to find srcAddr to send out the packet therfore we hacked vxWorks to work correctly with TiMOS.
+** VxWorks socket added vRtrId option along with src/dest port and src/dest addr to identify a specific socket in VxWorks. This gives the ability to have VPRN contexts.
+* Scheduler Design:
+** Scheduler create
+** Create ctrl pipe, mgmt pipe, Timer mgr
+** Bind events to each pipe. ex: control events like RTM message, interface goes down, etc.

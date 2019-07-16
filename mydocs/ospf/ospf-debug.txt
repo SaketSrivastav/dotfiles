@@ -1,0 +1,271 @@
+configure log log-id 20
+from debug-trace
+to session
+exit all
+debug vswitch-controller packet experimenter
+shell traceLimitDisable
+shell hostAdd vsd-1.mvdcvtb21.mv.nuagenetworks.net 10.31.61.197
+
+admin
+admin
+shell nvcDebugAclPgExpr 1
+shell traceLimitDisable
+
+ovs-appctl -t bgpd vlog/set timos_linux_rtm:info
+ovs-appctl -t bgpd vlog/set warn
+
+systemctl stop nuage-bgp
+systemctl start nuage-bgp
+
+ovs-appctl vlog/set vrs_ofproto_dpif:dbg
+ovs-appctl vlog/disable-rate-limit
+ovs-appctl vlog/set warn
+
+
+echo "" > /var/log/openvswitch/bgpd.log
+systemctl start nuage-bgp
+ovs-appctl -t bgpd vlog/set info
+ovs-appctl -t bgpd vlog/disable-rate-limit
+ovs-appctl -t bgpd vlog/reopen
+tailf /var/log/openvswitch/bgpd.log
+
+ovs-appctl -t nuage-rpc vlog/set info
+ovs-appctl -t nuage-rpc vlog/disable-rate-limit
+ovs-appctl -t nuage-rpc vlog/reopen
+
+
+(gdb) p/x 1313350216
+$1 = 0x4e482248
+
+(gdb) p/x 411971678
+$2 = 0x188e305e
+
+258710350AND(NOT(1817787928OR450336842OR1402922882OR1900892205OR2053304822OR555346623OR977834079OR1043110831OR80936602))
+
+ovs-appctl ofproto/trace "skb_priority(0),in_port(26),skb_mark(0),eth(src=00:00:5e:30:8e:18,dst=00:00:00:00:00:01),eth_type(0x0800),ipv4(src=100.100.100.1,dst=100.100.100.21,proto=89,tos=0xc0,ttl=2,frag=no)"
+
+ovs-ofctl add-flow alubr0 --flow-format=NXM+table_id "table=4,priority=8,in_port=74,ip,nw_proto=89,action=move:NXM_OF_ETH_DST[0..31]->NXM_ALU_VRF_ID[],resubmit(,27)"
+
+ovs-ofctl del-flows alubr0 in_port=7,table=13,ip,nw_proto=89,nw_dst=224.0.0.5,nw_src=100.100.100.1,vrf_id=411971678
+ovs-ofctl del-flows alubr0 in_port=7,table=13,ip,nw_proto=89,nw_dst=224.0.0.6,nw_src=100.100.100.1,vrf_id=411971678
+ovs-ofctl  del-flows alubr0 table=4,ip,nw_proto=89,nw_dst=224.0.0.5/16,vrf_id=411971678,evpn_id=871856781
+ovs-ofctl  del-flows alubr0 table=4,ip,nw_proto=89,nw_dst=100.100.100.1,vrf_id=411971678
+
+
+
+debug vswitch-controller acl 17fff01c-3a29-4d92-aeec-713b23b0b70e
+
+admin
+admin
+shell nvcLoggerSet 0
+shell traceEnable
+shell traceLimitDisable
+shell nvcOspfDebugEnable
+debug vswitch-controller policy
+debug vswitch-controller vswitches
+
+
+shell nvcDebugSetAll
+
+
+shell nvcSysmonDebugEnable
+shell tim_xmpp_print_sysmon_msg 1
+
+
+
+shell memLeakDetectReset NVC
+shell memLeakDetectEnable NVC
+shell nvcOspfDebugEnable
+
+
+
+(460178911OR1115625076OR258197327OR1684432575OR245795364OR1632983951OR1524344129OR1079196711OR613193878OR1843143780)
+configure vswitch-controller shutdown 
+shell nvcOspfDebugEnable
+shell hostAdd vsd-1.mvdcvtb22.mv.nuagenetworks.net 10.31.62.6
+shell nvcAclCatDebugEnable
+configure vswitch-controller no shutdown 
+
+debug vswitch-controller rtm detail
+debug vswitch-controller packet experimenter detail vs-ip 10.100.20.1
+shell nvcOspfDebugEnable
+configure vswitch-controller no shutdown
+shell hostAdd vsd-1.mvdcvtb22.mv.nuagenetworks.net 10.31.62.6
+
+shell hostAdd vsd-1.mvdcvtb22.mv.nuagenetworks.net 10.31.62.6
+
+configure vswitch-controller shutdown
+shell memLeakDetectReset NVC
+shell memLeakDetectEnable NVC
+shell memLeakDetectReset DC_XMPP
+shell memLeakDetectEnable DC_XMPP
+configure vswitch-controller no shutdown
+
+shell nvcPlcySetMaxAuditIntvl
+shell hostAdd vsd-1.mvdcvtb32.mv.nuagenetworks.net 10.31.226.72
+admin
+admin
+shell nvcLoggerSet 0
+shell traceEnable
+shell traceLimitDisable
+shell nvcDebugSetAll
+shell nvcAclDebugEnable
+
+shell tim_xmpp_print_xml_request 1
+shell tim_xmpp_print_xml_response 1
+
+shell tim_xmpp_print_xml_request 0
+shell tim_xmpp_print_xml_response 0
+
+
+
+
+shell nvcOspfDebugEnable
+shell nvcDebugSetAll
+
+config vsw no shut
+
+shell nvcLoggerSet 0
+shell traceEnable
+shell traceLimitDisable
+shell nvcSysmonDebugEnable
+shell tim_xmpp_print_sysmon_msg 1
+shell tim_xmpp_print_xml_request 1
+shell tim_xmpp_print_xml_response 1
+
+shell nvcOspfDebugEnable
+shell nvcAclDebugEnable
+config vsw op auto 10.15.1.254/32
+exit all
+shell hostAdd vsd-1.mvqa09.mv.nuagenetworks.net 10.31.131.83
+
+shell nvcDumpAclCatDB 954882224
+
+shell nvcLoggerSet 0
+shell traceEnable
+shell traceLimitDisable
+shell hostAdd vsd-1.mvdcdev26.us.alcatel-lucent.com 10.31.51.191
+
+
+
+
+debug vswitch-controller packet experimenter detail
+config vsw no shut
+
+shell hostAdd vsd-1.mvdcvtb10.mv.nuagenetworks.net 10.31.231.136
+
+OSPF OVFCTL Rules:
+=================================================
+ovs-ofctl  add-flow alubr0 --flow-format=NXM+table_id 'table=4,priority=4,ip,nw_proto=89,actions=move:NXM_ALU_VRF_ID[]->NXM_OF_ETH_DST[0..31],output:7'
+ovs-ofctl  add-flow alubr0 --flow-format=NXM+table_id 'table=4,priority=8,in_port=7,ip,nw_proto=89,actions=resubmit(,27)'
+ovs-ofctl add-flow alubr0 --flow-format=NXM+table_id 'in_port=7,priority=8,table=13,ip,nw_proto=89,action=move:NXM_OF_ETH_SRC[0..31]->NXM_ALU_VRF_ID[],resubmit(,13)'
+
+admin
+admin
+shell hostAdd vsd-1.mvdcvtb22.mv.nuagenetworks.net 10.31.62.6
+
+1684863835
+
+shell hostAdd vsd-1.mvqa09.mv.nuagenetworks.net 10.31.131.83
+
+
+nuage-ospf-ovsdb conf-ospf-inst 1 '{"areas":[{"areaId":"0.0.0.10","routerId":"79.15.79.78","type":"default"}],"asbr":"true","export":"","export_overlay":"true","external_preference":"150","import":"","instanceId":"d5489911-4b80-4293-a932-4d893ee2ea96","preference":"10","routerId":"79.15.79.78","shutdown":"false","superbackbone":"false","vrId":"1403528897"}'] --audit-ver "ssl:10.10.13.7:1"
+
+
+
+
+ovs-ofctl add-flow alubr0 --flow-format=NXM+table_id 'in_port=7,priority=65530,table=13,ip,nw_proto=89,nw_dst=224.0.0.6,nw_src=20.0.0.1,action=move:NXM_OF_ETH_SRC[0..31]->NXM_ALU_VRF_ID[],load:0x01005E000000->NXM_OF_ETH_DST[0..47],move:NXM_OF_IP_DST[0..22]->NXM_OF_ETH_DST[0..22],set_evpn_id:0x79d690d0,FLOOD'
+
+
+ovs-ofctl add-flow alubr0 --flow-format=NXM+table_id 'priority=4,ip,table=4,nw_proto=89,actions=move:NXM_ALU_VRF_ID[]->NXM_OF_ETH_DST[0..31],output:7,set_evpn_id:0x6b710f1f,FLOOD'
+
+ovs-ofctl add-flow alubr0 --flow-format=NXM+table_id 'priority=4,ip,table=4,nw_proto=89,actions=move:NXM_ALU_VRF_ID[]->NXM_OF_ETH_DST[0..31],output:8,set_evpn_id:0x79d690d0,FLOOD'
+
+
+nuage-ospf-ovsdb conf-ospf-inst 1 '{"areas":[{"areaId":"0.0.0.10","routerId":"79.15.79.78","type":"default"}],"asbr":"true","export":"","export_overlay":"false","external_preference":"150","import":"","instanceId":"d5489911-4b80-4293-a932-4d893ee2ea96","preference":"10","routerId":"79.15.79.78","shutdown":"false","superbackbone":"true","vrId":"1403528897"}' --audit-ver ssl:10.10.13.7:1
+
+nuage-ospf-ovsdb conf-ospf-if-config 1 '{"areaId":"0.0.0.1","deadInt":"40","gw_ip":"20.0.7.1","helloInt":"10","ifIndex":"ec7e627f-5f09-48f8-8fe8-d42fbf37cbd9","ifType":"broadcast","instanceId":"718e5c70-6224-4cd6-aaec-df75361115a4","l2SvcId":"708575412","metric":"20","name":"int-1","routerId":"92.95.153.160","shutdown":"False","vrId":"1770174922"}'
+
+bgp_port = 7
+
+
+ovs-ofctl  add-flow alubr0 --flow-format=NXM+table_id "table=4,priority=65535,ip,nw_proto=89,actions=move:NXM_ALU_VRF_ID[]->NXM_OF_ETH_DST[0..31],output:7"
+
+ovs-ofctl add-flow alubr0 --flow-format=NXM+table_id  "priority=8,table=13,ip,nw_proto=89,action=move:NXM_OF_ETH_SRC[0..31]->NXM_ALU_VRF_ID[],resubmit(,13)"
+
+ovs-ofctl add-flow alubr0 --flow-format=NXM+table_id "in_port=%s,priority=65530,table=13,ip,nw_proto=89,nw_dst=224.0.0.5, nw_src=20.0.7.1 action=move:NXM_OF_ETH_SRC[0..31]->NXM_ALU_VRF_ID[],set_evpn_id:862166750,FLOOD"
+ % (bgp_port, gw_ip, evpn_id)
+
+
+
+ovsdb-client -v transact '["NuageBgp", {"op": "update", "table": "PolicyStatement", "where": [["a_name", "==", "_nuage_int_pol_vexp_605973299"]], "row": {"entries": "\nentry 10\nfrom protocol bgp\naction accept\naction community add _nuage_int_comm_605973299\nentry 20\nfrom protocol nvc-local\naction accept\naction community add _nuage_int_comm_605973299\nentry 30\nfrom protocol direct\naction accept\naction community add _nuage_int_comm_605973299\nentry 40\nfrom protocol ospf\naction accept\naction community add _nuage_int_comm_605973299\ndefault-action accept" }}]'
+
+ovsdb-client -v transact '["NuageBgp", {"op": "update", "table": "PolicyStatement", "where": [["a_name", "==", "export-all"]], "row": {"entries": "\nentry 10\nfrom protocol static\naction reject\ndefault-action accept\ndefault-action tag 12345" }}]'
+
+
+
+
+\nentry 10\nfrom protocol bgp\naction accept\nentry 20\nfrom protocol bgp-vpn\naction accept\nentry 30\nfrom protocol nvc-local\naction accept\nentry 40\nfrom protocol nvc\naction accept\ndefault-action reject
+
+nuage-ospf-ovsdb conf-ospf-if-config 1 '{"areaId":"0.0.0.20","authKeyType":"none","authType":"none","deadInt":"40","gw_ip":"20.0.1.1","helloInt":"10","ifIndex":"32fa2b10-6160-4d11-a87c-ddf9867f06a4","ifType":"broadcast","instanceId":"c0daa0f0-54b4-4e65-a3d1-e1267503fbba","l2SvcId":"1923000152","metric":"1","mtu":"1500","name":"test","priority":"1","routerId":"201.144.119.6","shutdown":"False","vrId":"1891341813"}'"
+
+"\nentry 10\nfrom protocol bgp\naction accept\naction community add _nuage_int_comm_1758241421\nentry 20\nfrom protocol nvc-local\naction accept\naction community add _nuage_int_comm_1758241421\nentry 30\nfrom protocol direct\naction accept\naction community add _nuage_int_comm_1758241421\nentry 40\nfrom protocol ospf\naction accept\naction community add _nuage_int_comm_1758241421\ndefault-action accept"
+
+/usr/bin/ovsdb-client transact '["NuageBgp",{"table": "OspfArea", "uuid-name": "new_ospf_area", "row": {"areaId": "0.0.0.1", "areaType": "default", "nssaNoAdvAreaRange": "[]", "markStale": false, "instanceId": "f07ac848-1fdf-4d25-8d05-2b0f9f93ecd8", "nssaAdvAreaRange": "", "vrId": 1758241421, "redistExt": false, "globalNoAdvAreaRange": "[]", "routerId": "95.251.102.177", "origDefRt": "no", "export": "", "import": "", "summary": true, "globalAdvAreaRange": "[]", "metric": 1}, "op": "insert"},{"table": "OspfInstance", "where": [["instanceId", "==", "f07ac848-1fdf-4d25-8d05-2b0f9f93ecd8"], ["vrId", "==", 1758241421]], "mutations": [["areas", "insert", ["set", [["named-uuid", "new_ospf_area"]]]]], "op": "mutate"} ]'
+
+ovsdb-client -v transact '["NuageBgp", {"op": "update", "table": "PolicyStatement", "where": [["a_name", "==", "_nuage_int_pol_vexp_655228462"]], "row": {"entries": "\nentry 10\nfrom protocol bgp\naction accept\naction community add _nuage_int_comm_655228462\nentry 20\nfrom protocol nvc-local\naction accept\naction community add _nuage_int_comm_655228462\nentry 30\nfrom protocol direct\naction accept\naction community add _nuage_int_comm_655228462\ndefault-action reject"
+
+ovsdb-vnf-config setthreshold '{"action":"SHUTOFF","cpu_threshold":"80","disk_threshold":"80","memory_threshold":"80","min_occurrence":"5","monit_interval":"10","sample_interval":"60","vnf_id":"19f62180-4293-49dd-b809-046d2673762d"}'"
+
+ovs-appctl -t bgpd vlog/set timos_linux_wdog:info
+ovs-appctl -t bgpd vlog/disable-rate-limit
+ovs-appctl -t bgpd vlog/reopen
+
+
+shell hostAdd vsd-1.mvdcvtb22.mv.nuagenetworks.net 10.31.62.6
+
+
+gdb --args /usr/bin/bgpd unix:/var/run/openvswitch/db.sock --log-file=/var/log/openvswitch/bgpd.log --pidfile=/var/run/openvswitch/bgpd.pid
+
+ovsdb-client 
+
+nuage-bgp-ovsdb conf-bgp-policy 387829363 1 1 1 1 '{
+  "msg-type": "dynamic",
+  "policy": [
+    {
+      "name": "exportAll",
+      "default-action": "ACCEPT",
+      "xml-definition": ""}],
+  "msg-ver": 2,
+  "oper": "add",
+  "cust-id": 10005}'
+
+
+valgrind:
+ip netns exec nuage-bgp valgrind -q --leak-check=full --read-var-info=yes --track-origins=yes --error-limit=no --time-stamp=yes --log-file=/var/log/openvswitch/bgpd.valgrind.log.%p /usr/bin/bgpd unix:/var/run/openvswitch/db.sock -vconsole:emer -vsyslog:err -vfile:warn --no-chdir --log-file=/var/log/openvswitch/bgpd.log --pidfile=/var/run/openvswitch/bgpd.pid --detach 
+
+/usr/bin/nuage-bgp-ovsdb conf-bgp-policy 1 1 0 1 0 "{\"msg-ver\": 2, \"msg-type\": \"baseline\", \"cust-id\": 1618940627, \"oper\": \"add\", \"policy\":[{\"name\": \"export-all\",\"default-action\": \"ACCEPT\",\"xml-size\": 641,\"xml-definition\": \"<?xml version=\\\"1.0\\\" encoding=\\\"UTF-8\\\"?><routing-policy xmlns=\\\"alu:nuage:bgp:routing:policy\\\">  <policy-definition>    <statements>      <statement>        <name>entry_2</name>        <conditions>          <install-protocol-eq>STATIC</install-protocol-eq>          <area-eq>1</area-eq>        </conditions>        <actions>          <reject-route />        </actions>      </statement>    </statements>    <default-action>      <accept-route-set>        <accept-route />         <set-tag>123456</set-tag>         <metric-type>1</metric-type>      </accept-route-set>    </default-action>  </policy-definition></routing-policy>\"}]}"
+
+
+542 2018/09/05 20:20:50.72 UTC MINOR: DEBUG #2001 Base NVC
+"NVC: nvcVcaSendJsonCmd1
+sessHdl/transHdl:  19/1721 Sending JSON transaction for pVca(0xd7c0bc48) from(fn
+:nvcVcaSendSysmonProbe, ln:526) with cmd: nuage-vlan-config dump-xml"
+
+543 2018/09/05 20:20:50.72 UTC MINOR: DEBUG #2001 Base NVC
+"NVC: nvcVcaSendJsonCmd1
+sessHdl/transHdl:  20/1722 Sending JSON transaction for pVca(0xd7e30208) from(fn
+:nvcVcaSendSysmonProbe, ln:526) with cmd: nuage-vlan-config dump-xml"
+
+544 2018/09/05 20:20:50.72 UTC MINOR: DEBUG #2001 Base NVC
+"NVC: nvcVcaSendJsonCmd1
+sessHdl/transHdl:  21/1723 Sending JSON transaction for pVca(0xd21147b0) from(fn
+:nvcVcaSendSysmonProbe, ln:526) with cmd: nuage-vlan-config dump-xml"
+
+545 2018/09/05 20:20:51.72 UTC MINOR: DEBUG #2001 Base NVC
+"NVC: nvcVcaSendJsonCmd1
+sessHdl/transHdl:  24/1724 Sending JSON transaction for pVca(0xd7a5eda0) from(fn
+:nvcVcaSendSysmonProbe, ln:526) with cmd: nuage-vlan-config dump-xml"
+
+
+/usr/bin/ovsdb-client transact '["NuageBgp", {"table": "OspfInterface", "row": {"priority": 1,"areaId":"0.0.0.1", "ifType": "broadcast", "authKeyType": "no", "instanceId": "c118e901-0d18-4d87-80c9-d9dd2c021684", "metric": 0, "vrId": 2101861783, "authType": "no", "mtu": 0, "authKey": "", "md5Cfg":"0","deadInt": 40, "routerId": "114.225.77.69", "shutdown": false, "passive": false, "ifIndex":"21654681-1d75-410f-93ea-7a0ad2ddcdbe", "l2SvcId": 711116289, "helloInt": 10}, "where":[["ifIndex", "==", "21654681-1d75-410f-93ea-7a0ad2ddcdbe"], ["areaId", "==", "0.0.0.1"],["instanceId","==","c118e901-0d18-4d87-80c9-d9dd2c021684"], ["vrId", "==", 2101861783]],"op":"update"}]'

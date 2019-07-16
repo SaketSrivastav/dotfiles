@@ -1,0 +1,29 @@
+cd ~/ws/pygash/testsuites
+
+centos 7:
+source /tmp/pygash/bin/activate
+
+centos 6:
+source /opt/rh/python27/enable
+
+pygash
+
+Specific test:
+layer = runTest('nsg.test_ospf.TestOspfNsgEvents.test_99_routing_toggle', suite='ospf')
+
+to get current layer:
+layer = get_current_layer()
+
+Breakpoint to setup and pause:
+runTest('nsg.test_ospf.TestOspfNsgEvents.test_99_routing_toggle',  breakpoints='nsg.test_ospf.OspfNsgEventsLayer.setUp:after', suite='ospf')
+
+Close vm cosole sessions:
+[vm.ssh.close() for vm in layer.vms.get_vms()]
+OR in case of breakpoint run:
+[vm.ssh.close() for vm in cls.vms.get_vms()]
+
+Or specific vm:
+https://intranet.mv.nuagenetworks.net/pygash/pygash/nsg_bootstrap.html#interact-with-vport-vms
+
+
+

@@ -1,0 +1,12 @@
+* VIP FIP Pool Enhancement
+** FIPs consumed on VSC as shared services. This can be combined with
+*** PAT + FIP (on Vport)
+**** FIP domain and PAT domain could belong to same shared service or different.
+**** If shared service is different then existing implementation sends 1 shared service stanza for PAT with pat-ip and 1 shared-service stanza for with floating ip for the second.
+**** If PAT ip and FIP ip belong to the same shared service domain then there is 1 single shared service stanza with PAT IP and FIP ip.
+
+*** VIP FIP
+**** In current implementation, when FIP is associated with VIP, in VPORT response we send VIP ip, FIP ip in t_nuage_vip and in vport response we add a shared-service stanza with no FIP IP and no PAT IP. VSC assumes that this floating IP present in the VIP belongs to only 1 shared-service vrf present in the stanza. VSC loops through the shared-service domain and subnet to resolve the FIP IP.
+**** In our case this use case VIP can belong to multiple FIP domains therefore will be confusing for VSC on how to resolve VIP FIP to which shared-service domain.
+**** Proposed solution is to have FIP domain and subnet present in the t_nuage_vip structure passed by VSD so that allows which FIP to resolve to which shared-service domain.
+**** Therefore when processing shared service we would check whether shared-service vrf is present in the VIP list also.

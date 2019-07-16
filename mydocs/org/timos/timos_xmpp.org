@@ -1,0 +1,317 @@
+* tim_xmpp_start
+** called in pnMainPrivate which is in timos main method
+* tim_xmpp_init
+** init mem (tim_xmpp_mem_init)
+*** create dfrag mem manager for MOD_DC_XMPP
+** init xmpp scheduler (tim_xmpp_sched_init)
+*** Create semaphores, msg queues and register mgmt and event handlers for the queues namely tim_xmpp_mgmt_handler and tim_xmpp_msg_ehandler.
+** dc xmpp init (tim_xmpp_init3)
+*** Add msg TIM_XMPP_MSG_INIT to xmpp mgmt msg queue. *tim_xmpp_process_mgmt_msg* method process the mgmt msg.
+*** tim_xmpp_sched_init2 creates timers for xmpp_reconnect, xmpp_session, cna_audit, xmpp_msg, read_event, write_event.
+*** tim_xmpp_init2 initializes the XMPP session state to INCIPIENT. Initializes with empty server name and server port 0.
+* nvcDCVCObjsSet
+** Initialize the xmpp server url and call tim_xmpp_jid_update with serverUrl.
+** Create a control message with type TIM_XMPP_MSG_JID. Process JID in tim_xmpp_process_jid. Change the session type to TIM_XMPP_SESS_EVENT_SET_JID. Enable reconnect timer (tim_xmpp_sched_timer_reconnect_enable). Change xmpp session state to TIM_XMPP_SESS_STATE_TIMER_RUNNING.
+** Reconnect timer calls tim_xmpp_sched_timer_reconnect_exp which then calls tim_xmpp_process_timer_reconnect_exp to process the request. Initiate the connection with tim_xmpp_connect.
+** Create a jid in the format username@domain/resource. Pass the generated username and password "password". Setup the connection using xmpp_conn_connect_setup which registers tim_xmpp_conn_handler to process the connection.
+** If the status from xmpp-server is XMPP_CONN_CONNECT then call xmpp session event with session state TIM_XMPP_SESS_EVENT_CONNECT and then to TIM_XMPP_SESS_EVENT_XMPP_DISCOVER.
+** Add xmpp_handler for message *tim_xmpp_handle_message* and *tim_xmpp_handle_presence*.
+** Send a xmpp presence xml to xmpp server with system name, mgmt ip and vsc_version. The presence text includes "Hello Nuagians"
+** Send xmpp discover get query "/disco#items" to xmpp server by calling tim_xmpp_disco.
+** Resolve xmpp server name to IP and call the tim_xmpp_srv_callback. This sends a control message with type TIM_XMPP_MSG_SRV_CALLBACK which calls the tim_xmpp_process_srv_callback. If xmpp sock_srv_update is true then we get the xmpp_server name and server port otherwise use generic server name and port 5222.
+
+
+* Valid tim_xmpp_session_states nd their events.
+** TIM_XMPP_SESS_STATE_INCIPIENT
+*** State changes to TIM_XMPP_SESS_STATE_TIMER_RUNNING.
+** TIM_XMPP_SESS_STATE_XMPP_DISCOVER
+*** State can change to cna discover or state_function.
+** TIM_XMPP_SESS_STATE_CNA_DISCOVER
+*** State change to state_function.
+** TIM_XMPP_SESS_STATE_FUNCTION
+*** State change to cna_discover or disconnect.
+** TIM_XMPP_SESS_STATE_TIMER_RUNNING (Active state)
+*** State change to connecting.
+** TIM_XMPP_SESS_STATE_CONNECTING
+*** State change to connected.
+** TIM_XMPP_SESS_STATE_CONNECTED
+*** State change to xmpp discover or disconnect.
+** TIM_XMPP_SESS_STATE_DISCONNECTING
+*** State change to running disconnecting.
+
+* Message Exchanges while setup.
+** First message sent to server after connection succussfull.
+*** SENT: tim_xmpp_log_handler conn SENT: <?xml version="1.0"?><stream:stream to="vsd-1.mvdcunit02.us.alcatel-lucent.com" xml:lang="en"version="1.0" xmlns="jabber:client" xmlns:stream="http://etherx.jabber.org/streams">xmlns:tls="http://www.ietf.org/rfc/rfc2595.txt" tim_xmpp_log_handler xmpp RECV: <stream:stream xmlns='jabber:client' xmlns:stream='http://etherx.jabber.org/streams' id='11076804880278502390' from='vsd-1.mvdcunit02.us.alcatel-lucent.com' version='1.0' xml:lang='en'>
+*** tim_xmpp_log_handler xmpp RECV: <stream:features><c hash="sha-1" xmlns="http://jabber.org/protocol/caps" ver="eOq600BQbF72MlOr7JrGWaQinyE=" node="http://www.process-one.net/en/ejabberd/"/><register xmlns="http://jabber.org/features/iq-register"/><push xmlns="p1:push"/><rebind xmlns="p1:rebind"/><ack xmlns="p1:ack"/><mechanisms xmlns="urn:ietf:params:xml:ns:xmpp-sasl"><mechanism>PLAIN</mechanism><mechanism>DIGEST-MD5</mechanism><mechanism>X-OAUTH2</mechanism><mechanism>SCRAM-SHA-1</mechanism></mechanisms></stream:features>
+** Second message is "iq" message for authentication and inband registration.
+*** tim_xmpp_log_handler conn SENT: <iq id="_xmpp_inband_register" type="set"><query xmlns="jabber:iq:register"><username>faaca6095200</username><password>password</password></query></iq>
+*** tim_xmpp_log_handler xmpp RECV: <iq id="_xmpp_inband_register" type="result" from="vsd-1.mvdcunit02.us.alcatel-lucent.com"/>
+** Third message is to agree upon auth mechanism.
+*** tim_xmpp_log_handler conn SENT: <auth mechanism="DIGEST-MD5" xmlns="urn:ietf:params:xml:ns:xmpp-sasl"/>
+*** tim_xmpp_log_handler xmpp RECV: <challenge xmlns="urn:ietf:params:xml:ns:xmpp-sasl">bm9uY2U9IjQyNzAyNTI4MTE3MjY2ODY5OTUiLHFvcD0iYXV0aCIsY2hhcnNldD11dGYtOCxhbGdvcml0aG09bWQ1LXNlc3M=</challenge>
+** Next set of messages are the authentication messages.
+*** tim_xmpp_log_handler conn SENT: <response xmlns="urn:ietf:params:xml:ns:xmpp-sasl">dXNlcm5hbWU9ImZhYWNhNjA5NTIwMCIscmVhbG09InZzZC0xLm12ZGN1bml0MDIudXMuYWxjYXRlbC1sdWNlbnQuY29tIixub25jZT0iNDI3MDI1MjgxMTcyNjY4Njk5NSIsY25vbmNlPSIwMERFQURCRUVGMDAiLG5jPTAwMDAwMDAxLHFvcD1hdXRoLGRpZ2VzdC11cmk9InhtcHAvdnNkLTEubXZkY3VuaXQwMi51cy5hbGNhdGVsLWx1Y2VudC5jb20iLHJlc3BvbnNlPWNhNzIzMzQzNDBiYmNiNWI5MzFmOTVkM2I5MWM0NjMyLGNoYXJzZXQ9dXRmLTg=</response>
+*** tim_xmpp_log_handler xmpp RECV: <challenge xmlns="urn:ietf:params:xml:ns:xmpp-sasl">cnNwYXV0aD04OTM5OWVmNmE3MzU4MjhjY2NmNTdiOTc0MmFlYmRkYg==</challenge>
+*** tim_xmpp_log_handler conn SENT: <response xmlns="urn:ietf:params:xml:ns:xmpp-sasl"/>
+*** tim_xmpp_log_handler xmpp RECV: <success xmlns="urn:ietf:params:xml:ns:xmpp-sasl"/>
+** Reopen xmpp stream
+*** tim_xmpp_log_handler conn SENT: <?xml version="1.0"?><stream:stream to="vsd-1.mvdcunit02.us.alcatel-lucent.com" xml:lang="en"version="1.0" xmlns="jabber:client" xmlns:stream="http://etherx.jabber.org/streams">xmlns:tls="http://www.ietf.org/rfc/rfc2595.txt"
+*** tim_xmpp_log_handler xmpp RECV: <stream:stream xmlns='jabber:client' xmlns:stream='http://etherx.jabber.org/streams' id='15348443218331662644' from='vsd-1.mvdcunit02.us.alcatel-lucent.com' version='1.0' xml:lang='en'>
+*** tim_xmpp_log_handler xmpp RECV: <stream:features><c hash="sha-1" xmlns="http://jabber.org/protocol/caps" ver="eOq600BQbF72MlOr7JrGWaQinyE=" node="http://www.process-one.net/en/ejabberd/"/><push xmlns="p1:push"/><bind xmlns="urn:ietf:params:xml:ns:xmpp-bind"/><session xmlns="urn:ietf:params:xml:ns:xmpp-session"><optional/></session><sm xmlns="urn:xmpp:sm:2"/><sm xmlns="urn:xmpp:sm:3"/></stream:features>
+** Bind to nuage resource and start xmpp session.
+*** tim_xmpp_log_handler conn SENT: <iq id="_xmpp_bind1" type="set"><bind xmlns="urn:ietf:params:xml:ns:xmpp-bind"><resource>nuage</resource></bind></iq>
+*** tim_xmpp_log_handler xmpp RECV: <iq id="_xmpp_bind1" type="result"><bind xmlns="urn:ietf:params:xml:ns:xmpp-bind"><jid>faaca6095200@vsd-1.mvdcunit02.us.alcatel-lucent.com/nuage</jid></bind></iq>
+*** tim_xmpp_log_handler conn SENT: <iq id="_xmpp_session1" type="set"><session xmlns="urn:ietf:params:xml:ns:xmpp-session"/></iq>
+*** tim_xmpp_log_handler xmpp RECV: <iq id="_xmpp_session1" xml:lang="en" type="result"/>
+** Exchange vCard presence message and XMPP Discover messages.
+*** tim_xmpp_log_handler conn SENT: <iq id="1" type="set"><vCard xmlns="vcard-temp"><FN>Dut-G</FN><type>VSC</type><version>C-0.0.current-d7283a</version><ip>10.31.40.96</ip><DESC><router_id>255.0.0.0</router_id></DESC></vCard></iq>
+*** tim_xmpp_log_handler conn SENT: <presence><status>Hello! Nuageians</status><x xmlns="vcard-temp:x:update"/></presence>
+*** tim_xmpp_log_handler conn SENT: <iq id="2" to="vsd-1.mvdcunit02.us.alcatel-lucent.com" type="get"><query xmlns="http://jabber.org/protocol/disco#items"/></iq>
+*** tim_xmpp_log_handler xmpp RECV: <iq id="1" type="result" to="faaca6095200@vsd-1.mvdcunit02.us.alcatel-lucent.com/nuage" from="faaca6095200@vsd-1.mvdcunit02.us.alcatel-lucent.com"/>
+*** tim_xmpp_log_handler xmpp RECV: <message type="normal" to="faaca6095200@vsd-1.mvdcunit02.us.alcatel-lucent.com" from="vsd-1.mvdcunit02.us.alcatel-lucent.com"><subject>Welcome!</subject><body>Hi.Welcome to this XMPP server.</body><delay stamp="2016-11-30T18:09:58.453Z" xmlns="urn:xmpp:delay" from="vsd-1.mvdcunit02.us.alcatel-lucent.com">Offline Storage</delay></message>
+*** tim_xmpp_log_handler xmpp RECV: <presence xml:lang="en" to="faaca6095200@vsd-1.mvdcunit02.us.alcatel-lucent.com/nuage" from="faaca6095200@vsd-1.mvdcunit02.us.alcatel-lucent.com/nuage"><status>Hello! Nuageians</status><x xmlns="vcard-temp:x:update"/></presence>
+*** tim_xmpp_log_handler xmpp RECV: <iq id="2" type="result" to="faaca6095200@vsd-1.mvdcunit02.us.alcatel-lucent.com/nuage" from="vsd-1.mvdcunit02.us.alcatel-lucent.com"><query xmlns="http://jabber.org/protocol/disco#items"><item jid="conference.vsd-1.mvdcunit02.us.alcatel-lucent.com"/><item jid="pubsub.vsd-1.mvdcunit02.us.alcatel-lucent.com"/><item jid="vsd-1.mvdcunit02.us.alcatel-lucent.com" name="Announcements" node="announce"/></query></iq>
+*** tim_xmpp_log_handler conn SENT: <iq id="3" to="conference.vsd-1.mvdcunit02.us.alcatel-lucent.com" type="get"><query xmlns="http://jabber.org/protocol/disco#info"/></iq>
+*** tim_xmpp_log_handler conn SENT: <iq id="4" to="pubsub.vsd-1.mvdcunit02.us.alcatel-lucent.com" type="get"><query xmlns="http://jabber.org/protocol/disco#info"/></iq>
+*** tim_xmpp_log_handler conn SENT: <iq id="5" to="vsd-1.mvdcunit02.us.alcatel-lucent.com" type="get"><query xmlns="http://jabber.org/protocol/disco#info"/></iq>
+*** tim_xmpp_log_handler xmpp RECV: <iq id="3" type="result" to="faaca6095200@vsd-1.mvdcunit02.us.alcatel-lucent.com/nuage" from="conference.vsd-1.mvdcunit02.us.alcatel-lucent.com"><query xmlns="http://jabber.org/protocol/disco#info"><identity type="text" category="conference" name="Chatrooms"/><feature var="http://jabber.org/protocol/disco#info"/><feature var="http://jabber.org/protocol/disco#items"/><feature var="http://jabber.org/protocol/muc"/><feature var="http://jabber.org/protocol/muc#unique"/><feature var="jabber:iq:register"/><feature var="http://jabber.org/protocol/rsm"/><feature var="vcard-temp"/><x xmlns="jabber:x:data" type="result"><field type="hidden" var="FORM_TYPE"><value>http://jabber.org/network/serverinfo</value></field></x></query></iq>
+*** tim_xmpp_log_handler xmpp RECV: <iq id="4" type="result" to="faaca6095200@vsd-1.mvdcunit02.us.alcatel-lucent.com/nuage" from="pubsub.vsd-1.mvdcunit02.us.alcatel-lucent.com"><query xmlns="http://jabber.org/protocol/disco#info"><identity type="service" category="pubsub" name="Publish-Subscribe"/><feature var="http://jabber.org/protocol/disco#info"/><feature var="http://jabber.org/protocol/disco#items"/><feature var="http://jabber.org/protocol/pubsub"/><feature var="http://jabber.org/protocol/commands"/><feature var="vcard-temp"/><feature var="http://jabber.org/protocol/pubsub#access-authorize"/><feature var="http://jabber.org/protocol/pubsub#access-open"/><feature var="http://jabber.org/protocol/pubsub#access-presence"/><feature var="http://jabber.org/protocol/pubsub#access-whitelist"/><feature var="http://jabber.org/protocol/pubsub#auto-create"/><feature var="http://jabber.org/protocol/pubsub#auto-subscribe"/><feature var="http://jabber.org/protocol/pubsub#collections"/><feature var="http://jabber.org/protocol/pubsub#config-node"/><feature var="http://jabber.org/protocol/pubsub#create-and-configure"/><feature var="http://jabber.org/protocol/pubsub#create-nodes"/><feature var="http://jabber.org/protocol/pubsub#delete-items"/><feature var="http://jabber.org/protocol/pubsub#delete-nodes"/><feature var="http://jabber.org/protocol/pubsub#filtered-notifications"/><feature var="http://jabber.org/protocol/pubsub#get-pending"/><feature var="http://jabber.org/protocol/pubsub#instant-nodes"/><feature var="h
+** Subscribe to all well known topics.
+*** tim_xmpp_log_handler conn SENT: <iq id="6" to="pubsub.vsd-1.mvdcunit02.us.alcatel-lucent.com" type="set"><pubsub xmlns="http://jabber.org/protocol/pubsub"><subscribe jid="faaca6095200@vsd-1.mvdcunit02.us.alcatel-lucent.com/nuage" node="cna_discover_jid"/></pubsub></iq>
+*** tim_xmpp_log_handler conn SENT: <iq id="7" to="pubsub.vsd-1.mvdcunit02.us.alcatel-lucent.com" type="set"><pubsub xmlns="http://jabber.org/protocol/pubsub"><subscribe jid="faaca6095200@vsd-1.mvdcunit02.us.alcatel-lucent.com/nuage" node="ping"/></pubsub></iq>
+** Move from XMPP discover state to VSD Discover state.
+*** tim_xmpp_log_handler conn SENT: <iq id="8" to="pubsub.vsd-1.mvdcunit02.us.alcatel-lucent.com" type="get"><pubsub xmlns="http://jabber.org/protocol/pubsub"><items node="cna_discover_jid"/></pubsub></iq>
+*** tim_xmpp_log_handler xmpp RECV: <iq id="5" type="result" to="faaca6095200@vsd-1.mvdcunit02.us.alcatel-lucent.com/nuage" from="vsd-1.mvdcunit02.us.alcatel-lucent.com"><query xmlns="http://jabber.org/protocol/disco#info"><identity type="pep" category="pubsub"/><identity type="im" category="server" name="ejabberd"/><x xmlns="jabber:x:data" type="result"><field type="hidden" var="FORM_TYPE"><value>http://jabber.org/network/serverinfo</value></field></x><feature var="http://jabber.org/protocol/commands"/><feature var="http://jabber.org/protocol/disco#info"/><feature var="http://jabber.org/protocol/disco#items"/><feature var="http://jabber.org/protocol/offline"/><feature var="http://jabber.org/protocol/pubsub"/><feature var="http://jabber.org/protocol/pubsub#access-authorize"/><feature var="http://jabber.org/protocol/pubsub#access-open"/><feature var="http://jabber.org/protocol/pubsub#access-presence"/><feature var="http://jabber.org/protocol/pubsub#access-whitelist"/><featurevar="http://jabber.org/protocol/pubsub#auto-create"/><feature var="http://jabber.org/protocol/pubsub#auto-subscribe"/><feature var="http://jabber.org/protocol/pubsub#collections"/><feature var="http://jabber.org/protocol/pubsub#config-node"/><feature var="http://jabber.org/protocol/pubsub#create-and-configure"/><feature var="http://jabber.org/protocol/pubsub#create-nodes"/><feature var="http://jabber.org/protocol/pubsub#delete-items"/><feature var="http://jabber.org/protocol/pubsub#delete-nodes"/><feature var="http://jabber.org/
+*** tim_xmpp_log_handler xmpp RECV: <iq id="6" type="result" to="faaca6095200@vsd-1.mvdcunit02.us.alcatel-lucent.com/nuage" from="pubsub.vsd-1.mvdcunit02.us.alcatel-lucent.com"><pubsub xmlns="http://jabber.org/protocol/pubsub"><subscription jid="faaca6095200@vsd-1.mvdcunit02.us.alcatel-lucent.com/nuage" subscription="subscribed" node="cna_discover_jid" subid="5C8813F6BBC74"/></pubsub></iq>
+** After receving CNA get response we change the state from VSD discover to Functional state.
+*** CNA get response: tim_xmpp_log_handler xmpp RECV: <iq id="8" type="result" to="faaca6095200@vsd-1.mvdcunit02.us.alcatel-lucent.com/nuage" from="pubsub.vsd-1.mvdcunit02.us.alcatel-lucent.com"><pubsub xmlns="http://jabber.org/protocol/pubsub"><items node="cna_discover_jid"><item id="e457ca6d-2d10-46ef-8602-e8b69634921a"><jid>cna@vsd-1.mvdcunit02.us.alcatel-lucent.com/nuage</jid></item></items></pubsub></iq>
+** Request NVC SYSTEM-CONFIG
+*** tim_xmpp_log_handler conn SENT: <iq id="9" to="cna@vsd-1.mvdcunit02.us.alcatel-lucent.com/nuage" type="get"><query xmlns="alu:nuage:iq"><cloudmgmt nodeType="VSC" xmlns="http://www.nuagenetworks.net/2013/controller/Request" version="4.0.6"><request type="SYSTEM-CONFIG"/></cloudmgmt></query></iq>
+*** tim_xmpp_log_handler xmpp RECV: <iq id="9" type="result" xml:lang="en" to="faaca6095200@vsd-1.mvdcunit02.us.alcatel-lucent.com/nuage" from="cna@vsd-1.mvdcunit02.us.alcatel-lucent.com/nuage"><query xmlns="alu:nuage:iq"><response audit-seq-num="0" type="SYSTEM-CONFIG" version="4.0.6"><system-config><version>4.0.6</version><seq-num>0</seq-num><acl-tcp-timeout>3600</acl-tcp-timeout><acl-non-tcp-timeout>180</acl-non-tcp-timeout><backward-compatible>false</backward-compatible><topic>nuage_vsc_service_id_faaca6095200@vsd-1.mvdcunit02.us.alcatel-lucent.com</topic><stats-collector type="ip"><collector-ipaddress>10.31.40.98</collector-ipaddress><collector-port>29090</collector-port><collector-protobuf-port>39090</collector-protobuf-port></stats-collector><syslog-destination-host>localhost</syslog-destination-host><syslog-destination-port>514</syslog-destination-port><vport-init-stateful-timer>300</vport-init-stateful-timer><statistics-enabled>false</statistics-enabled><sticky-ECMP-Idle-Timeout>0</sticky-ECMP-Idle-Timeout><flowcollection-enabled>false</flowcollection-enabled></system-config></response></query></iq>
+#+BEGIN_LOGS
+A:Dut-G# configure vswitch-controller xmpp-server vsd-1.mvdcunit02.us.alcatel-lucent.com
+[018 h 11/30/16 18:09:53.250]  A:nvc:DC_XMPP:tim_xmpp_jid_update vsd-1.mvdcunit02.us.alcatel-lucent.com
+[018 h 11/30/16 18:09:53.253]  A:nvc:DC_XMPP:tim_xmpp_msg_poke
+[018 h 11/30/16 18:0*9A::Dut-G5# 3.254]  A:xmpp:DC_XMPP:tim_xmpp_msg_ehandler
+[018 h 11/30/16 18:09:53.256]  A:xmpp:DC_XMPP:tim_xmpp_process_msg type 1
+[018 h 11/30/16 18:09:53.258]  A:xmpp:DC_XMPP:tim_xmpp_process_jid vsd-1.mvdcunit02.us.alcatel-lucent.com/nuage
+[018 h 11/30/16 18:09:53.261]  A:xmpp:DC_XMPP:tim_xmpp_session_event 1 -> (1)
+[018 h 11/30/16 18:09:53.263]  A:xmpp:DC_XMPP:tim_xmpp_session_event xmpp state transition event: Set Jid current-state: Incipient new-state: Active error: 0
+[018 h 11/30/16 18:09:53.267]  A:xmpp:DC_XMPP:tim_xmpp_process_msg mgmt pending: 0 vxTicks 6490533 now: 1 msgs outstanding: 0
+
+
+*A:Dut-G#
+*A:Dut-G#
+*A:Dut-G#
+*A:Dut-G#
+*A:Dut-G# [018 h 11/30/16 18:09:58.261]  A:xmpp:DC_XMPP:tim_xmpp_process_timer_reconnect_exp
+[018 h 11/30/16 18:09:58.263]  A:xmpp:DC_XMPP:tim_xmpp_disconnect
+[018 h 11/30/16 18:09:58.265]  A:xmpp:DC_XMPP:tim_xmpp_cna_server_release
+[018 h 11/30/16 18:09:58.266]  A:xmpp:DC_XMPP:tim_xmpp_connect
+[018 h 11/30/16 18:09:58.267]  A:xmpp:DC_XMPP:tim_xmpp_log_handler xmpp setup done ..
+[018 h 11/30/16 18:09:58.269]  A:xmpp:DC_XMPP:tim_xmpp_srv_start domain vsd-1.mvdcunit02.us.alcatel-lucent.com, seqno 1
+[018 h 11/30/16 18:09:58.271]  A:xmpp:DC_XMPP:tim_xmpp_connect p 0xd7ce1fd0, c 0xd7c4f2d8, co 0xd7c4f1b8, seq 1
+[018 h 11/30/16 18:09:58.378]  A:dns_00001:DC_XMPP:tim_xmpp_srv_callback vsd-1.mvdcunit02.us.alcatel-lucent.com 1
+[018 h 11/30/16 18:09:58.381]  A:dns_00001:DC_XMPP:tim_xmpp_msg_poke
+[018 h 11/30/16 18:09:58.383]  A:xmpp:DC_XMPP:tim_xmpp_msg_ehandler
+[018 h 11/30/16 18:09:58.385]  A:xmpp:DC_XMPP:tim_xmpp_process_msg type 9
+[018 h 11/30/16 18:09:58.386]  A:xmpp:DC_XMPP:tim_xmpp_process_srv_callback vsd-1.mvdcunit02.us.alcatel-lucent.com 1
+[018 h 11/30/16 18:09:58.388]  A:xmpp:DC_XMPP:tim_xmpp_dns_start name vsd-1.mvdcunit02.us.alcatel-lucent.com, seqno 1
+[018 h 11/30/16 18:09:58.391]  A:xmpp:DC_XMPP:tim_xmpp_process_msg mgmt pending: 0 vxTicks 6491046 now: 1 msgs outstanding: 0
+
+[018 h 11/30/16 18:09:58.391]  A:dns_00002:DC_XMPP:tim_xmpp_dns_callback vsd-1.mvdcunit02.us.alcatel-lucent.com 1
+[018 h 11/30/16 18:09:58.396]  A:dns_00002:DC_XMPP:tim_xmpp_msg_poke
+[018 h 11/30/16 18:09:58.398]  A:xmpp:DC_XMPP:tim_xmpp_msg_ehandler
+[018 h 11/30/16 18:09:58.400]  A:xmpp:DC_XMPP:tim_xmpp_process_msg type 8
+[018 h 11/30/16 18:09:58.402]  A:xmpp:DC_XMPP:tim_xmpp_process_dns_callback vsd-1.mvdcunit02.us.alcatel-lucent.com, 1
+[018 h 11/30/16 18:09:58.405]  A:xmpp:DC_XMPP:tim_xmpp_log_handler xmpp sock_connect to 10.31.40.98:5222 returned 451
+[018 h 11/30/16 18:09:58.407]  A:xmpp:DC_XMPP:tim_xmpp_log_handler xmpp attempting toconnect to 10.31.40.98
+[018 h 11/30/16 18:09:58.409]  A:xmpp:DC_XMPP:tim_xmpp_process_dns_callback sock 451
+[018 h 11/30/16 18:09:58.411]  A:xmpp:DC_XMPP:tim_xmpp_sched_connect
+[018 h 11/30/16 18:09:58.412]  A:xmpp:DC_XMPP:tim_xmpp_session_event 2 -> (3)
+[018 h 11/30/16 18:09:58.414]  A:xmpp:DC_XMPP:tim_xmpp_session_event xmpp state transition event: Connecting current-state: Active new-state: Connecting error: 0
+[018 h 11/30/16 18:09:58.418]  A:xmpp:DC_XMPP:tim_xmpp_process_msg mgmt pending: 0 vxTicks 6491048 now: 2 msgs outstanding: 0
+
+[018 h 11/30/16 18:09:58.421]  A:xmpp:DC_XMPP:tim_xmpp_log_handler xmpp connection successful
+[018 h 11/30/16 18:09:58.423]  A:xmpp:DC_XMPP:tim_xmpp_log_handler conn SENT: <?xml version="1.0"?><stream:stream to="vsd-1.mvdcunit02.us.alcatel-lucent.com" xml:lang="en"version="1.0" xmlns="jabber:client" xmlns:stream="http://etherx.jabber.org/streams">xmlns:tls="http://www.ietf.org/rfc/rfc2595.txt"
+[018 h 11/30/16 18:09:58.430]  A:xmpp:DC_XMPP:tim_xmpp_log_handler xmpp RECV: <stream:stream xmlns='jabber:client' xmlns:stream='http://etherx.jabber.org/streams' id='11076804880278502390' from='vsd-1.mvdcunit02.us.alcatel-lucent.com' version='1.0' xml:lang='en'>
+[018 h 11/30/16 18:09:58.436]  A:xmpp:DC_XMPP:tim_xmpp_log_handler xmpp RECV: <stream:features><c hash="sha-1" xmlns="http://jabber.org/protocol/caps" ver="eOq600BQbF72MlOr7JrGWaQinyE=" node="http://www.process-one.net/en/ejabberd/"/>
+<register xmlns="http://jabber.org/features/iq-register"/>
+<push xmlns="p1:push"/>
+<rebind xmlns="p1:rebind"/>
+<ack xmlns="p1:ack"/>
+<mechanisms xmlns="urn:ietf:params:xml:ns:xmpp-sasl"><mechanism>PLAIN</mechanism><mechanism>DIGEST-MD5</mechanism><mechanism>X-OAUTH2</mechanism><mechanism>SCRAM-SHA-1</mechanism></mechanisms>
+</stream:features>
+[018 h 11/30/16 18:09:58.446]  A:xmpp:DC_XMPP:tim_xmpp_log_handler conn SENT: <iq id="_xmpp_inband_register" type="set"><query xmlns="jabber:iq:register"><username>faaca6095200</username><password>password</password></query></iq>
+[018 h 11/30/16 18:09:58.453]  A:xmpp:DC_XMPP:tim_xmpp_log_handler xmpp RECV: <iq id="_xmpp_inband_register" type="result" from="vsd-1.mvdcunit02.us.alcatel-lucent.com"/>
+[018 h 11/30/16 18:09:58.457]  A:xmpp:DC_XMPP:tim_xmpp_log_handler xmpp Inband registration successful.
+[018 h 11/30/16 18:09:58.459]  A:xmpp:DC_XMPP:tim_xmpp_log_handler conn SENT: <auth mechanism="DIGEST-MD5" xmlns="urn:ietf:params:xml:ns:xmpp-sasl"/>
+[018 h 11/30/16 18:09:58.466]  A:xmpp:DC_XMPP:tim_xmpp_log_handler xmpp RECV: <challenge xmlns="urn:ietf:params:xml:ns:xmpp-sasl">bm9uY2U9IjQyNzAyNTI4MTE3MjY2ODY5OTUiLHFvcD0iYXV0aCIsY2hhcnNldD11dGYtOCxhbGdvcml0aG09bWQ1LXNlc3M=</challenge>
+[018 h 11/30/16 18:09:58.471]  A:xmpp:DC_XMPP:tim_xmpp_log_handler xmpp handle digest-md5 (challenge) called for challenge
+[018 h 11/30/16 18:09:58.475]  A:xmpp:DC_XMPP:tim_xmpp_log_handler conn SENT: <response xmlns="urn:ietf:params:xml:ns:xmpp-sasl">dXNlcm5hbWU9ImZhYWNhNjA5NTIwMCIscmVhbG09InZzZC0xLm12ZGN1bml0MDIudXMuYWxjYXRlbC1sdWNlbnQuY29tIixub25jZT0iNDI3MDI1MjgxMTcyNjY4Njk5NSIsY25vbmNlPSIwMERFQURCRUVGMDAiLG5jPTAwMDAwMDAxLHFvcD1hdXRoLGRpZ2VzdC11cmk9InhtcHAvdnNkLTEubXZkY3VuaXQwMi51cy5hbGNhdGVsLWx1Y2VudC5jb20iLHJlc3BvbnNlPWNhNzIzMzQzNDBiYmNiNWI5MzFmOTVkM2I5MWM0NjMyLGNoYXJzZXQ9dXRmLTg=</response>
+[018 h 11/30/16 18:09:58.486]  A:xmpp:DC_XMPP:tim_xmpp_log_handler xmpp RECV: <challenge xmlns="urn:ietf:params:xml:ns:xmpp-sasl">cnNwYXV0aD04OTM5OWVmNmE3MzU4MjhjY2NmNTdiOTc0MmFlYmRkYg==</challenge>
+[018 h 11/30/16 18:09:58.491]  A:xmpp:DC_XMPP:tim_xmpp_log_handler xmpp handle digest-md5 (rspauth) called for challenge
+[018 h 11/30/16 18:09:58.494]  A:xmpp:DC_XMPP:tim_xmpp_log_handler conn SENT: <response xmlns="urn:ietf:params:xml:ns:xmpp-sasl"/>
+[018 h 11/30/16 18:09:58.498]  A:xmpp:DC_XMPP:tim_xmpp_log_handler xmpp RECV: <success xmlns="urn:ietf:params:xml:ns:xmpp-sasl"/>
+[018 h 11/30/16 18:09:58.501]  A:xmpp:DC_XMPP:tim_xmpp_log_handler xmpp handle digest-md5 (rspauth) called for success
+[018 h 11/30/16 18:09:58.504]  A:xmpp:DC_XMPP:tim_xmpp_log_handler xmpp SASL DIGEST-MD5 auth successful
+[018 h 11/30/16 18:09:58.506]  A:xmpp:DC_XMPP:tim_xmpp_log_handler conn SENT: <?xml version="1.0"?><stream:stream to="vsd-1.mvdcunit02.us.alcatel-lucent.com" xml:lang="en"version="1.0" xmlns="jabber:client" xmlns:stream="http://etherx.jabber.org/streams">xmlns:tls="http://www.ietf.org/rfc/rfc2595.txt"
+[018 h 11/30/16 18:09:58.514]  A:xmpp:DC_XMPP:tim_xmpp_log_handler xmpp RECV: <stream:stream xmlns='jabber:client' xmlns:stream='http://etherx.jabber.org/streams' id='15348443218331662644' from='vsd-1.mvdcunit02.us.alcatel-lucent.com' version='1.0' xml:lang='en'>
+[018 h 11/30/16 18:09:58.522]  A:xmpp:DC_XMPP:tim_xmpp_log_handler xmpp Reopened stream successfully.
+[018 h 11/30/16 18:09:58.526]  A:xmpp:DC_XMPP:tim_xmpp_log_handler xmpp RECV: <stream:features><c hash="sha-1" xmlns="http://jabber.org/protocol/caps" ver="eOq600BQbF72MlOr7JrGWaQinyE=" node="http://www.process-one.net/en/ejabberd/"/><push xmlns="p1:push"/><bind xmlns="urn:ietf:params:xml:ns:xmpp-bind"/><session xmlns="urn:ietf:params:xml:ns:xmpp-session"><optional/></session><sm xmlns="urn:xmpp:sm:2"/><sm xmlns="urn:xmpp:sm:3"/></stream:features>
+[018 h 11/30/16 18:09:58.536]  A:xmpp:DC_XMPP:tim_xmpp_log_handler conn SENT: <iq id="_xmpp_bind1" type="set"><bind xmlns="urn:ietf:params:xml:ns:xmpp-bind"><resource>nuage</resource></bind></iq>
+[018 h 11/30/16 18:09:58.544]  A:xmpp:DC_XMPP:tim_xmpp_log_handler xmpp RECV: <iq id="_xmpp_bind1" type="result"><bind xmlns="urn:ietf:params:xml:ns:xmpp-bind"><jid>faaca6095200@vsd-1.mvdcunit02.us.alcatel-lucent.com/nuage</jid></bind></iq>
+[018 h 11/30/16 18:09:58.552]  A:xmpp:DC_XMPP:tim_xmpp_log_handler xmpp Bind successful.
+[018 h 11/30/16 18:09:58.554]  A:xmpp:DC_XMPP:tim_xmpp_log_handler conn SENT: <iq id="_xmpp_session1" type="set"><session xmlns="urn:ietf:params:xml:ns:xmpp-session"/></iq>
+[018 h 11/30/16 18:09:58.558]  A:xmpp:DC_XMPP:tim_xmpp_log_handler xmpp RECV: <iq id="_xmpp_session1" xml:lang="en" type="result"/>
+[018 h 11/30/16 18:09:58.561]  A:xmpp:DC_XMPP:tim_xmpp_log_handler xmpp Session establishment successful.
+[018 h 11/30/16 18:09:58.563]  A:xmpp:DC_XMPP:tim_xmpp_conn_handler connected
+[018 h 11/30/16 18:09:58.564]  A:xmpp:DC_XMPP:tim_xmpp_session_event 3 -> (4)
+[018 h 11/30/16 18:09:58.565]  A:xmpp:DC_XMPP:tim_xmpp_session_event xmpp state transition event: Connect current-state: Connecting new-state: Connected error: 0
+[018 h 11/30/16 18:09:58.568]  A:xmpp:DC_XMPP:tim_xmpp_session_event 5 -> (7)
+[018 h 11/30/16 18:09:58.570]  A:xmpp:DC_XMPP:tim_xmpp_session_event xmpp state transition event: XMPP Discover current-state: Connected new-state: XMPP Discover error: 0
+[018 h 11/30/16 18:09:58.573]  A:xmpp:DC_XMPP:tim_xmpp_vcard_presence
+[018 h 11/30/16 18:09:58.574]  A:xmpp:DC_XMPP:tim_xmpp_log_handler conn SENT: <iq id="1" type="set"><vCard xmlns="vcard-temp"><FN>Dut-G</FN><type>VSC</type><version>C-0.0.current-d7283a</version><ip>10.31.40.96</ip><DESC><router_id>255.0.0.0</router_id></DESC></vCard></iq>
+[018 h 11/30/16 18:09:58.579]  A:xmpp:DC_XMPP:tim_xmpp_log_handler conn SENT: <presence><status>Hello! Nuageians</status><x xmlns="vcard-temp:x:update"/></presence>
+[018 h 11/30/16 18:09:58.582]  A:xmpp:DC_XMPP:tim_xmpp_disco
+[018 h 11/30/16 18:09:58.584]  A:xmpp:DC_XMPP:tim_xmpp_log_handler conn SENT: <iq id="2" to="vsd-1.mvdcunit02.us.alcatel-lucent.com" type="get"><query xmlns="http://jabber.org/protocol/disco#items"/></iq>
+[018 h 11/30/16 18:09:58.591]  A:xmpp:DC_XMPP:tim_xmpp_log_handler xmpp RECV: <iq id="1" type="result" to="faaca6095200@vsd-1.mvdcunit02.us.alcatel-lucent.com/nuage" from="faaca6095200@vsd-1.mvdcunit02.us.alcatel-lucent.com"/>
+[018 h 11/30/16 18:09:58.598]  A:xmpp:DC_XMPP:tim_xmpp_log_handler xmpp RECV: <message type="normal" to="faaca6095200@vsd-1.mvdcunit02.us.alcatel-lucent.com" from="vsd-1.mvdcunit02.us.alcatel-lucent.com"><subject>Welcome!</subject><body>Hi.
+Welcome to this XMPP server.</body><delay stamp="2016-11-30T18:09:58.453Z" xmlns="urn:xmpp:delay" from="vsd-1.mvdcunit02.us.alcatel-lucent.com">Offline Storage</delay></message>
+[018 h 11/30/16 18:09:58.610]  A:xmpp:DC_XMPP:tim_xmpp_handle_message
+[018 h 11/30/16 18:09:58.612]  A:xmpp:DC_XMPP:tim_xmpp_log_handler xmpp RECV: <presence xml:lang="en" to="faaca6095200@vsd-1.mvdcunit02.us.alcatel-lucent.com/nuage" from="faaca6095200@vsd-1.mvdcunit02.us.alcatel-lucent.com/nuage"><status>Hello! Nuageians</status><x xmlns="vcard-temp:x:update"/></presence>
+[018 h 11/30/16 18:09:58.618]  A:xmpp:DC_XMPP:tim_xmpp_handle_presence
+[018 h 11/30/16 18:09:58.619]  A:xmpp:DC_XMPP:tim_xmpp_handle_presence presence eventfrom: faaca6095200@vsd-1.mvdcunit02.us.alcatel-lucent.com/nuage status available
+[018 h 11/30/16 18:09:58.622]  A:xmpp:DC_XMPP:tim_xmpp_handle_presence ignoring the presence received from us (faaca6095200@vsd-1.mvdcunit02.us.alcatel-lucent.com/nuage)
+[018 h 11/30/16 18:09:58.627]  A:xmpp:DC_XMPP:tim_xmpp_log_handler xmpp RECV: <iq id="2" type="result" to="faaca6095200@vsd-1.mvdcunit02.us.alcatel-lucent.com/nuage" from="vsd-1.mvdcunit02.us.alcatel-lucent.com"><query xmlns="http://jabber.org/protocol/disco#items"><item jid="conference.vsd-1.mvdcunit02.us.alcatel-lucent.com"/><item jid="pubsub.vsd-1.mvdcunit02.us.alcatel-lucent.com"/><item jid="vsd-1.mvdcunit02.us.alcatel-lucent.com" name="Announcements" node="announce"/></query></iq>
+[018 h 11/30/16 18:09:58.638]  A:xmpp:DC_XMPP:tim_xmpp_id_timed_handler rtt time 50 msecs
+[018 h 11/30/16 18:09:58.640]  A:xmpp:DC_XMPP:tim_xmpp_disco_item conference.vsd-1.mvdcunit02.us.alcatel-lucent.com state 7
+[018 h 11/30/16 18:09:58.643]  A:xmpp:DC_XMPP:tim_xmpp_log_handler conn SENT: <iq id="3" to="conference.vsd-1.mvdcunit02.us.alcatel-lucent.com" type="get"><query xmlns="http://jabber.org/protocol/disco#info"/></iq>
+[018 h 11/30/16 18:09:58.648]  A:xmpp:DC_XMPP:tim_xmpp_disco_item pubsub.vsd-1.mvdcunit02.us.alcatel-lucent.com state 7
+[018 h 11/30/16 18:09:58.651]  A:xmpp:DC_XMPP:tim_xmpp_log_handler conn SENT: <iq id="4" to="pubsub.vsd-1.mvdcunit02.us.alcatel-lucent.com" type="get"><query xmlns="http://jabber.org/protocol/disco#info"/></iq>
+[018 h 11/30/16 18:09:58.656]  A:xmpp:DC_XMPP:tim_xmpp_disco_item vsd-1.mvdcunit02.us.alcatel-lucent.com state 7
+[018 h 11/30/16 18:09:58.659]  A:xmpp:DC_XMPP:tim_xmpp_log_handler conn SENT: <iq id="5" to="vsd-1.mvdcunit02.us.alcatel-lucent.com" type="get"><query xmlns="http://jabber.org/protocol/disco#info"/></iq>
+[018 h 11/30/16 18:09:58.666]  A:xmpp:DC_XMPP:tim_xmpp_log_handler xmpp RECV: <iq id="3" type="result" to="faaca6095200@vsd-1.mvdcunit02.us.alcatel-lucent.com/nuage" from="conference.vsd-1.mvdcunit02.us.alcatel-lucent.com"><query xmlns="http://jabber.org/protocol/disco#info"><identity type="text" category="conference" name="Chatrooms"/><feature var="http://jabber.org/protocol/disco#info"/><feature var="http://jabber.org/protocol/disco#items"/><feature var="http://jabber.org/protocol/muc"/><feature var="http://jabber.org/protocol/muc#unique"/><feature var="jabber:iq:register"/><feature var="http://jabber.org/protocol/rsm"/><feature var="vcard-temp"/><x xmlns="jabber:x:data" type="result"><field type="hidden" var="FORM_TYPE"><value>http://jabber.org/network/serverinfo</value></field></x></query></iq>
+[018 h 11/30/16 18:09:58.686]  A:xmpp:DC_XMPP:tim_xmpp_id_timed_handler rtt time 40 msecs
+[018 h 11/30/16 18:09:58.693]  A:xmpp:DC_XMPP:tim_xmpp_log_handler xmpp RECV: <iq id="4" type="result" to="faaca6095200@vsd-1.mvdcunit02.us.alcatel-lucent.com/nuage" from="pubsub.vsd-1.mvdcunit02.us.alcatel-lucent.com"><query xmlns="http://jabber.org/protocol/disco#info"><identity type="service" category="pubsub" name="Publish-Subscribe"/><feature var="http://jabber.org/protocol/disco#info"/><feature var="http://jabber.org/protocol/disco#items"/><feature var="http://jabber.org/protocol/pubsub"/><feature var="http://jabber.org/protocol/commands"/><feature var="vcard-temp"/><feature var="http://jabber.org/protocol/pubsub#access-authorize"/><feature var="http://jabber.org/protocol/pubsub#access-open"/><feature var="http://jabber.org/protocol/pubsub#access-presence"/><feature var="http://jabber.org/protocol/pubsub#access-whitelist"/><feature var="http://jabber.org/protocol/pubsub#auto-create"/><feature var="http://jabber.org/protocol/pubsub#auto-subscribe"/><feature var="http://jabber.org/protocol/pubsub#collections"/><feature var="http://jabber.org/protocol/pubsub#config-node"/><feature var="http://jabber.org/protocol/pubsub#create-and-configure"/><feature var="http://jabber.org/protocol/pubsub#create-nodes"/><feature var="http://jabber.org/protocol/pubsub#delete-items"/><feature var="http://jabber.org/protocol/pubsub#delete-nodes"/><feature var="http://jabber.org/protocol/pubsub#filtered-notifications"/><feature var="http://jabber.org/protocol/pubsub#get-pending"/><feature var="http://jabber.org/protocol/pubsub#instant-nodes"/><feature var="h
+[018 h 11/30/16 18:09:58.728]  A:xmpp:DC_XMPP:tim_xmpp_id_timed_handler rtt time 80 msecs
+[018 h 11/30/16 18:09:58.729]  A:xmpp:DC_XMPP:tim_xmpp_handle_disco_item pubsub pubsub.vsd-1.mvdcunit02.us.alcatel-lucent.com, subscribing to all well known topics
+[018 h 11/30/16 18:09:58.733]  A:xmpp:DC_XMPP:tim_xmpp_sub
+[018 h 11/30/16 18:09:58.735]  A:xmpp:DC_XMPP:tim_xmpp_log_handler conn SENT: <iq id="6" to="pubsub.vsd-1.mvdcunit02.us.alcatel-lucent.com" type="set"><pubsub xmlns="http://jabber.org/protocol/pubsub"><subscribe jid="faaca6095200@vsd-1.mvdcunit02.us.alcatel-lucent.com/nuage" node="cna_discover_jid"/></pubsub></iq>
+[018 h 11/30/16 18:09:58.742]  A:xmpp:DC_XMPP:tim_xmpp_sub
+[018 h 11/30/16 18:09:58.744]  A:xmpp:DC_XMPP:tim_xmpp_log_handler conn SENT: <iq id="7" to="pubsub.vsd-1.mvdcunit02.us.alcatel-lucent.com" type="set"><pubsub xmlns="http://jabber.org/protocol/pubsub"><subscribe jid="faaca6095200@vsd-1.mvdcunit02.us.alcatel-lucent.com/nuage" node="ping"/></pubsub></iq>
+[018 h 11/30/16 18:09:58.751]  A:xmpp:DC_XMPP:tim_xmpp_sub
+[018 h 11/30/16 18:09:58.753]  A:xmpp:DC_XMPP:tim_xmpp_log_handler conn SENT: <iq id="8" to="pubsub.vsd-1.mvdcunit02.us.alcatel-lucent.com" type="get"><pubsub xmlns="http://jabber.org/protocol/pubsub"><items node="cna_discover_jid"/></pubsub></iq>
+[018 h 11/30/16 18:09:58.759]  A:xmpp:DC_XMPP:tim_xmpp_session_event 7 -> (8)
+[018 h 11/30/16 18:09:58.760]  A:xmpp:DC_XMPP:tim_xmpp_conn_call 0
+[018 h 11/30/16 18:09:58.762]  A:xmpp:DC_XMPP:tim_xmpp_session_event xmpp state transition event: VSD Discover current-state: XMPP Discover new-state: VSD Discover error: 0
+[018 h 11/30/16 18:09:58.772]  A:xmpp:DC_XMPP:tim_xmpp_log_handler xmpp RECV: <iq id="5" type="result" to="faaca6095200@vsd-1.mvdcunit02.us.alcatel-lucent.com/nuage" from="vsd-1.mvdcunit02.us.alcatel-lucent.com"><query xmlns="http://jabber.org/protocol/disco#info"><identity type="pep" category="pubsub"/><identity type="im" category="server" name="ejabberd"/><x xmlns="jabber:x:data" type="result"><field type="hidden" var="FORM_TYPE"><value>http://jabber.org/network/serverinfo</value></field></x><feature var="http://jabber.org/protocol/commands"/><feature var="http://jabber.org/protocol/disco#info"/><feature var="http://jabber.org/protocol/disco#items"/><feature var="http://jabber.org/protocol/offline"/><feature var="http://jabber.org/protocol/pubsub"/><feature var="http://jabber.org/protocol/pubsub#access-authorize"/><feature var="http://jabber.org/protocol/pubsub#access-open"/><feature var="http://jabber.org/protocol/pubsub#access-presence"/><feature var="http://jabber.org/protocol/pubsub#access-whitelist"/><featurevar="http://jabber.org/protocol/pubsub#auto-create"/><feature var="http://jabber.org/protocol/pubsub#auto-subscribe"/><feature var="http://jabber.org/protocol/pubsub#collections"/><feature var="http://jabber.org/protocol/pubsub#config-node"/><feature var="http://jabber.org/protocol/pubsub#create-and-configure"/><feature var="http://jabber.org/protocol/pubsub#create-nodes"/><feature var="http://jabber.org/protocol/pubsub#delete-items"/><feature var="http://jabber.org/protocol/pubsub#delete-nodes"/><feature var="http://jabber.org/
+[018 h 11/30/16 18:09:58.805]  A:xmpp:DC_XMPP:tim_xmpp_id_timed_handler rtt time 150 msecs
+[018 h 11/30/16 18:09:58.808]  A:xmpp:DC_XMPP:tim_xmpp_log_handler xmpp RECV: <iq id="6" type="result" to="faaca6095200@vsd-1.mvdcunit02.us.alcatel-lucent.com/nuage" from="pubsub.vsd-1.mvdcunit02.us.alcatel-lucent.com"><pubsub xmlns="http://jabber.org/protocol/pubsub"><subscription jid="faaca6095200@vsd-1.mvdcunit02.us.alcatel-lucent.com/nuage" subscription="subscribed" node="cna_discover_jid" subid="5C8813F6BBC74"/></pubsub></iq>
+[018 h 11/30/16 18:09:58.816]  A:xmpp:DC_XMPP:tim_xmpp_id_timed_handler rtt time 80 msecs
+[018 h 11/30/16 18:09:58.817]  A:xmpp:DC_XMPP:tim_xmpp_handle_cna_subscription type result
+[018 h 11/30/16 18:09:58.819]  A:xmpp:DC_XMPP:tim_xmpp_handle_cna_subscription subscription status subscribed
+[018 h 11/30/16 18:09:58.821]  A:xmpp:DC_XMPP:tim_xmpp_handle_cna_subscription Node cna_discover_jid
+[018 h 11/30/16 18:09:58.824]  A:xmpp:DC_XMPP:tim_xmpp_log_handler xmpp RECV: <message type="headline" to="faaca6095200@vsd-1.mvdcunit02.us.alcatel-lucent.com/nuage" from="pubsub.vsd-1.mvdcunit02.us.alcatel-lucent.com"><event xmlns="http://jabber.org/protocol/pubsub#event"><items node="ping"><item id="b6560a65-c154-41a5-9e6c-7fb4550902ad"><event xmlns="alu:pubsub:nuage"><header><node-type>PING</node-type><node-id>cna@vsd-1.mvdcunit02.us.alcatel-lucent.com/nuage</node-id><seq-num>1480529393924</seq-num></header><level>PING</level></event></item></items></event><delay stamp="2016-11-30T18:09:53Z"xmlns="urn:xmpp:delay" from="cna@vsd-1.mvdcunit02.us.alcatel-lucent.com/nuage"/></message>
+[018 h 11/30/16 18:09:58.837]  A:xmpp:DC_XMPP:tim_xmpp_handle_message
+[018 h 11/30/16 18:09:58.838]  A:xmpp:DC_XMPP:tim_xmpp_handle_pubsub_rsp Node ping
+[018 h 11/30/16 18:09:58.839]  A:xmpp:DC_XMPP:tim_xmpp_handle_pubsub_rsp Ignoring delayed ping
+[018 h 11/30/16 18:09:58.841]  A:xmpp:DC_XMPP:tim_xmpp_log_handler xmpp RECV: <iq id="7" type="result" to="faaca6095200@vsd-1.mvdcunit02.us.alcatel-lucent.com/nuage" from="pubsub.vsd-1.mvdcunit02.us.alcatel-lucent.com"><pubsub xmlns="http://jabber.org/protocol/pubsub"><subscription jid="faaca6095200@vsd-1.mvdcunit02.us.alcatel-lucent.com/nuage" subscription="subscribed" node="ping" subid="5C8813F6BC458"/></pubsub></iq>
+[018 h 11/30/16 18:09:58.849]  A:xmpp:DC_XMPP:tim_xmpp_id_timed_handler rtt time 100 msecs
+[018 h 11/30/16 18:09:58.850]  A:xmpp:DC_XMPP:tim_xmpp_handle_cna_subscription type result
+[018 h 11/30/16 18:09:58.852]  A:xmpp:DC_XMPP:tim_xmpp_handle_cna_subscription subscription status subscribed
+[018 h 11/30/16 18:09:58.854]  A:xmpp:DC_XMPP:tim_xmpp_handle_cna_subscription Node ping
+[018 h 11/30/16 18:09:58.856]  A:xmpp:DC_XMPP:tim_xmpp_log_handler xmpp RECV: <iq id="8" type="result" to="faaca6095200@vsd-1.mvdcunit02.us.alcatel-lucent.com/nuage" from="pubsub.vsd-1.mvdcunit02.us.alcatel-lucent.com"><pubsub xmlns="http://jabber.org/protocol/pubsub"><items node="cna_discover_jid"><item id="e457ca6d-2d10-46ef-8602-e8b69634921a"><jid>cna@vsd-1.mvdcunit02.us.alcatel-lucent.com/nuage</jid></item></items></pubsub></iq>
+[018 h 11/30/16 18:09:58.864]  A:xmpp:DC_XMPP:tim_xmpp_id_timed_handler rtt time 110 msecs
+[018 h 11/30/16 18:09:58.866]  A:xmpp:DC_XMPP:tim_xmpp_handle_cna_get_request
+[018 h 11/30/16 18:09:58.868]  A:xmpp:DC_XMPP:tim_xmpp_handle_cna_get_request Node cna_discover_jid
+[018 h 11/30/16 18:09:58.870]  A:xmpp:DC_XMPP:tim_xmpp_handle_cna_rsp update cna cna@vsd-1.mvdcunit02.us.alcatel-lucent.com/nuage
+[018 h 11/30/16 18:09:58.873]  A:xmpp:DC_XMPP:tim_xmpp_cna_server_update update server jid cna@vsd-1.mvdcunit02.us.alcatel-lucent.com/nuage status 1
+[018 h 11/30/16 18:09:58.876]  A:xmpp:DC_XMPP:tim_xmpp_cna_server_lookup
+[018 h 11/30/16 18:09:58.878]  A:xmpp:DC_XMPP:tim_xmpp_cna_server_add adding cna cna@vsd-1.mvdcunit02.us.alcatel-lucent.com/nuage
+[018 h 11/30/16 18:09:58.880]  A:xmpp:DC_XMPP:tim_xmpp_cna_server_available Add CNA cna@vsd-1.mvdcunit02.us.alcatel-lucent.com/nuage to available list cna_server_availablelist 0x0 server 0xd7c08ff8
+[018 h 11/30/16 18:09:58.884]  A:xmpp:DC_XMPP:tim_xmpp_cna_server_lookup_available
+[018 h 11/30/16 18:09:58.886]  A:xmpp:DC_XMPP:tim_xmpp_session_event 8 -> (9)
+[018 h 11/30/16 18:09:58.888]  A:xmpp:DC_XMPP:tim_xmpp_conn_call 1
+[018 h 11/30/16 18:09:58.890]  A:xmpp:DC_XMPP:tim_xmpp_session_event xmpp state transition event: Functional current-state: VSD Discover new-state: Functional error: 0
+[018 h 11/30/16 18:09:58.890]  A:nvc:DC_XMPP:tim_xmpp_msg_poke
+[018 h 11/30/16 18:09:58.895]  A:xmpp:DC_XMPP:tim_xmpp_cna_server_refresh
+[018 h 11/30/16 18:09:58.897]  A:xmpp:DC_XMPP:tim_xmpp_presence_sub
+[018 h 11/30/16 18:09:58.899]  A:xmpp:DC_XMPP:tim_xmpp_log_handler conn SENT: <presence type="subscribe" to="cna@vsd-1.mvdcunit02.us.alcatel-lucent.com" from="faaca6095200@vsd-1.mvdcunit02.us.alcatel-lucent.com/nuage"/>
+[018 h 11/30/16 18:09:58.904]  A:xmpp:DC_XMPP:tim_xmpp_cna_server_cleanup
+[018 h 11/30/16 18:09:58.909]  A:xmpp:DC_XMPP:tim_xmpp_log_handler xmpp RECV: <iq id="push8203763906230241724" type="set" to="faaca6095200@vsd-1.mvdcunit02.us.alcatel-lucent.com/nuage" from="faaca6095200@vsd-1.mvdcunit02.us.alcatel-lucent.com"><query xmlns="jabber:iq:roster"><item ask="subscribe" jid="cna@vsd-1.mvdcunit02.us.alcatel-lucent.com" subscription="none"/></query></iq>
+[018 h 11/30/16 18:09:58.917]  A:xmpp:DC_XMPP:tim_xmpp_msg_ehandler
+[018 h 11/30/16 18:09:58.918]  A:xmpp:DC_XMPP:tim_xmpp_process_msg type 4
+[018 h 11/30/16 18:09:58.920]  A:xmpp:DC_XMPP:tim_xmpp_cna_server_get_available
+[018 h 11/30/16 18:09:58.921]  A:xmpp:DC_XMPP:tim_xmpp_process_nuage Domain: DefaultDomain CNA Server: cna@vsd-1.mvdcunit02.us.alcatel-lucent.com/nuage
+[018 h 11/30/16 18:09:58.922]  A:xmpp:DC_XMPP:tim_xmpp_log_handler conn SENT: <iq id="9" to="cna@vsd-1.mvdcunit02.us.alcatel-lucent.com/nuage" type="get"><query xmlns="alu:nuage:iq"><cloudmgmt nodeType="VSC" xmlns="http://www.nuagenetworks.net/2013/controller/Request" version="4.0.6"><request type="SYSTEM-CONFIG"/></cloudmgmt></query></iq>
+[018 h 11/30/16 18:09:58.930]  A:xmpp:DC_XMPP:tim_xmpp_cna_server_lookup
+[018 h 11/30/16 18:09:58.932]  A:xmpp:DC_XMPP:tim_xmpp_process_msg mgmt pending: 0 vxTicks 6491100 now: 2 msgs outstanding: 0
+
+[018 h 11/30/16 18:09:58.935]  A:xmpp:DC_XMPP:tim_xmpp_log_handler xmpp RECV: <iq id="push12163641001016287199" type="set" to="faaca6095200@vsd-1.mvdcunit02.us.alcatel-lucent.com/nuage" from="faaca6095200@vsd-1.mvdcunit02.us.alcatel-lucent.com"><query xmlns="jabber:iq:roster"><item jid="cna@vsd-1.mvdcunit02.us.alcatel-lucent.com" subscription="to"/></query></iq>
+[018 h 11/30/16 18:09:58.941]  A:xmpp:DC_XMPP:tim_xmpp_log_handler xmpp RECV: <presence id="0g71U-4364" type="subscribed" xml:lang="en" to="faaca6095200@vsd-1.mvdcunit02.us.alcatel-lucent.com/nuage" from="cna@vsd-1.mvdcunit02.us.alcatel-lucent.com"/>
+[018 h 11/30/16 18:09:58.946]  A:xmpp:DC_XMPP:tim_xmpp_handle_presence
+[018 h 11/30/16 18:09:58.947]  A:xmpp:DC_XMPP:tim_xmpp_handle_presence presence eventfrom: cna@vsd-1.mvdcunit02.us.alcatel-lucent.com status subscribed
+[018 h 11/30/16 18:09:58.950]  A:xmpp:DC_XMPP:tim_xmpp_log_handler xmpp RECV: <presence id="0g71U-10" xml:lang="en" to="faaca6095200@vsd-1.mvdcunit02.us.alcatel-lucent.com/nuage" from="cna@vsd-1.mvdcunit02.us.alcatel-lucent.com/nuage"><c hash="sha-1" xmlns="http://jabber.org/protocol/caps" ver="NfJ3flI83zSdUDzCEICtbypursw=" node="http://www.igniterealtime.org/projects/smack"/></presence>
+[018 h 11/30/16 18:09:58.956]  A:xmpp:DC_XMPP:tim_xmpp_handle_presence
+[018 h 11/30/16 18:09:58.958]  A:xmpp:DC_XMPP:tim_xmpp_handle_presence presence eventfrom: cna@vsd-1.mvdcunit02.us.alcatel-lucent.com/nuage status available
+[018 h 11/30/16 18:09:58.961]  A:xmpp:DC_XMPP:tim_xmpp_cna_server_update update server jid cna@vsd-1.mvdcunit02.us.alcatel-lucent.com/nuage status 1
+[018 h 11/30/16 18:09:58.963]  A:xmpp:DC_XMPP:tim_xmpp_cna_server_lookup
+[018 h 11/30/16 18:09:58.965]  A:xmpp:DC_XMPP:tim_xmpp_log_handler xmpp RECV: <iq id="push7633033015006714700" type="set" to="faaca6095200@vsd-1.mvdcunit02.us.alcatel-lucent.com/nuage" from="faaca6095200@vsd-1.mvdcunit02.us.alcatel-lucent.com"><query xmlns="jabber:iq:roster"><item jid="cna@vsd-1.mvdcunit02.us.alcatel-lucent.com" subscription="to"/></query></iq>
+[018 h 11/30/16 18:09:58.972]  A:xmpp:DC_XMPP:tim_xmpp_log_handler xmpp RECV: <presence id="0g71U-4366" type="subscribe" xml:lang="en" to="faaca6095200@vsd-1.mvdcunit02.us.alcatel-lucent.com/nuage" from="cna@vsd-1.mvdcunit02.us.alcatel-lucent.com"/>
+[018 h 11/30/16 18:09:58.978]  A:xmpp:DC_XMPP:tim_xmpp_handle_presence
+[018 h 11/30/16 18:09:58.979]  A:xmpp:DC_XMPP:tim_xmpp_handle_presence presence eventfrom: cna@vsd-1.mvdcunit02.us.alcatel-lucent.com status subscribe
+[018 h 11/30/16 18:09:58.983]  A:xmpp:DC_XMPP:tim_xmpp_presence_sub
+[018 h 11/30/16 18:09:58.984]  A:xmpp:DC_XMPP:tim_xmpp_log_handler conn SENT: <presence type="subscribed" to="cna@vsd-1.mvdcunit02.us.alcatel-lucent.com" from="faaca6095200@vsd-1.mvdcunit02.us.alcatel-lucent.com/nuage"/>
+[018 h 11/30/16 18:09:58.991]  A:xmpp:DC_XMPP:tim_xmpp_log_handler xmpp RECV: <iq id="push74389379843378194" type="set" to="faaca6095200@vsd-1.mvdcunit02.us.alcatel-lucent.com/nuage" from="faaca6095200@vsd-1.mvdcunit02.us.alcatel-lucent.com"><query xmlns="jabber:iq:roster"><item jid="cna@vsd-1.mvdcunit02.us.alcatel-lucent.com" subscription="both"/></query></iq>
+[018 h 11/30/16 18:09:59.137]  A:xmpp:DC_XMPP:tim_xmpp_log_handler xmpp RECV: <iq id="9" type="result" xml:lang="en" to="faaca6095200@vsd-1.mvdcunit02.us.alcatel-lucent.com/nuage" from="cna@vsd-1.mvdcunit02.us.alcatel-lucent.com/nuage"><query xmlns="alu:nuage:iq"><response audit-seq-num="0" type="SYSTEM-CONFIG" version="4.0.6"><system-config><version>4.0.6</version><seq-num>0</seq-num><acl-tcp-timeout>3600</acl-tcp-timeout><acl-non-tcp-timeout>180</acl-non-tcp-timeout><backward-compatible>false</backward-compatible><topic>nuage_vsc_service_id_faaca6095200@vsd-1.mvdcunit02.us.alcatel-lucent.com</topic><stats-collector type="ip"><collector-ipaddress>10.31.40.98</collector-ipaddress><collector-port>29090</collector-port><collector-protobuf-port>39090</collector-protobuf-port></stats-collector><syslog-destination-host>localhost</syslog-destination-host><syslog-destination-port>514</syslog-destination-port><vport-init-stateful-timer>300</vport-init-stateful-timer><statistics-enabled>false</statistics-enabled><sticky-ECMP-Idle-Timeout>0</sticky-ECMP-Idle-Timeout><flowcollection-enabled>false</flowcollection-enabled></system-config></response></query></iq>
+[018 h 11/30/16 18:09:59.163]  A:xmpp:DC_XMPP:tim_xmpp_id_timed_handler rtt time 240 msecs
+[018 h 11/30/16 18:09:59.165]  A:xmpp:DC_XMPP:tim_xmpp_handle_nuage_rsp ret_status: 1UUID: <NULL> hypervisor id: <NULL> seq num: 1, cookie 0xd7779a38 cna cna@vsd-1.mvdcunit02.us.alcatel-lucent.com/nuage
+[018 h 11/30/16 18:09:59.170]  A:xmpp:DC_XMPP:tim_xmpp_cna_server_lookup
+[018 h 11/30/16 18:09:59.172]  A:xmpp:DC_XMPP:tim_xmpp_rsp_call call for u <NULL>, h <NULL> seq num 1 cookie 0xd7779a38 ret_status 1
+[018 h 11/30/16 18:09:59.175]  A:nvc:DC_XMPP:tim_xmpp_pubsub_send Subscribe for global
+[018 h 11/30/16 18:09:59.177]  A:nvc:DC_XMPP:tim_xmpp_msg_poke
+[018 h 11/30/16 18:09:59.178]  A:nvc:DC_XMPP:tim_xmpp_pubsub_send Subscribe for nuage_vsc_service_id_faaca6095200@vsd-1.mvdcunit02.us.alcatel-lucent.com
+[018 h 11/30/16 18:09:59.179]  A:xmpp:DC_XMPP:tim_xmpp_msg_ehandler
+[018 h 11/30/16 18:09:59.184]  A:nvc:DC_XMPP:tim_xmpp_msg_poke
+[018 h 11/30/16 18:09:59.185]  A:xmpp:DC_XMPP:tim_xmpp_process_msg type 5
+[018 h 11/30/16 18:09:59.189]  A:xmpp:DC_XMPP:tim_xmpp_process_pubsub global
+[018 h 11/30/16 18:09:59.191]  A:xmpp:DC_XMPP:tim_xmpp_sub
+[018 h 11/30/16 18:09:59.192]  A:xmpp:DC_XMPP:tim_xmpp_log_handler conn SENT: <iq id="10" to="pubsub.vsd-1.mvdcunit02.us.alcatel-lucent.com" type="set"><pubsub xmlns="http://jabber.org/protocol/pubsub"><subscribe jid="faaca6095200@vsd-1.mvdcunit02.us.alcatel-lucent.com/nuage" node="global"/></pubsub></iq>
+[018 h 11/30/16 18:09:59.200]  A:xmpp:DC_XMPP:tim_xmpp_process_msg mgmt pending: 0 vxTicks 6491127 now: 2 msgs outstanding: 1
+
+[018 h 11/30/16 18:09:59.203]  A:xmpp:DC_XMPP:tim_xmpp_msg_poke
+[018 h 11/30/16 18:09:59.206]  A:xmpp:DC_XMPP:tim_xmpp_log_handler xmpp RECV: <iq id="10" type="result" to="faaca6095200@vsd-1.mvdcunit02.us.alcatel-lucent.com/nuage" from="pubsub.vsd-1.mvdcunit02.us.alcatel-lucent.com"><pubsub xmlns="http://jabber.org/protocol/pubsub"><subscription jid="faaca6095200@vsd-1.mvdcunit02.us.alcatel-lucent.com/nuage" subscription="subscribed" node="global" subid="5C8813F7324AE"/></pubsub></iq>
+[018 h 11/30/16 18:09:59.216]  A:xmpp:DC_XMPP:tim_xmpp_id_timed_handler rtt time 20 msecs
+[018 h 11/30/16 18:09:59.218]  A:xmpp:DC_XMPP:tim_xmpp_handle_nvc_subscription type result
+[018 h 11/30/16 18:09:59.219]  A:xmpp:DC_XMPP:tim_xmpp_handle_nvc_subscription subscription status subscribed
+[018 h 11/30/16 18:09:59.222]  A:xmpp:DC_XMPP:tim_xmpp_handle_nvc_subscription Node global
+[018 h 11/30/16 18:09:59.224]  A:xmpp:DC_XMPP:tim_xmpp_pubsub_subscription_call call for global ret status 1
+[018 h 11/30/16 18:09:59.227]  A:xmpp:DC_XMPP:tim_xmpp_msg_ehandler
+[018 h 11/30/16 18:09:59.229]  A:xmpp:DC_XMPP:tim_xmpp_process_msg type 5
+[018 h 11/30/16 18:09:59.231]  A:xmpp:DC_XMPP:tim_xmpp_process_pubsub nuage_vsc_service_id_faaca6095200@vsd-1.mvdcunit02.us.alcatel-lucent.com
+[018 h 11/30/16 18:09:59.234]  A:xmpp:DC_XMPP:tim_xmpp_sub
+[018 h 11/30/16 18:09:59.236]  A:xmpp:DC_XMPP:tim_xmpp_log_handler conn SENT: <iq id="11" to="pubsub.vsd-1.mvdcunit02.us.alcatel-lucent.com" type="set"><pubsub xmlns="http://jabber.org/protocol/pubsub"><subscribe jid="faaca6095200@vsd-1.mvdcunit02.us.alcatel-lucent.com/nuage" node="nuage_vsc_service_id_faaca6095200@vsd-1.mvdcunit02.us.alcatel-lucent.com"/></pubsub></iq>
+[018 h 11/30/16 18:09:59.241]  A:nvc:DC_XMPP:tim_xmpp_msg_poke
+[018 h 11/30/16 18:09:59.247]  A:xmpp:DC_XMPP:tim_xmpp_process_msg mgmt pending: 0 vxTicks 6491131 now: 2 msgs outstanding: 1
+
+[018 h 11/30/16 18:09:59.250]  A:xmpp:DC_XMPP:tim_xmpp_msg_poke
+[018 h 11/30/16 18:09:59.253]  A:xmpp:DC_XMPP:tim_xmpp_log_handler xmpp RECV: <iq id="11" type="result" to="faaca6095200@vsd-1.mvdcunit02.us.alcatel-lucent.com/nuage" from="pubsub.vsd-1.mvdcunit02.us.alcatel-lucent.com"><pubsub xmlns="http://jabber.org/protocol/pubsub"><subscription jid="faaca6095200@vsd-1.mvdcunit02.us.alcatel-lucent.com/nuage" subscription="subscribed" node="nuage_vsc_service_id_faaca6095200@vsd-1.mvdcunit02.us.alcatel-lucent.com" subid="5C8813F73DC0B"/></pubsub></iq>
+[018 h 11/30/16 18:09:59.266]  A:xmpp:DC_XMPP:tim_xmpp_id_timed_handler rtt time 30 msecs
+[018 h 11/30/16 18:09:59.268]  A:xmpp:DC_XMPP:tim_xmpp_handle_nvc_subscription type result
+[018 h 11/30/16 18:09:59.271]  A:xmpp:DC_XMPP:tim_xmpp_handle_nvc_subscription subscription status subscribed
+[018 h 11/30/16 18:09:59.273]  A:xmpp:DC_XMPP:tim_xmpp_handle_nvc_subscription Node nuage_vsc_service_id_faaca6095200@vsd-1.mvdcunit02.us.alcatel-lucent.com
+[018 h 11/30/16 18:09:59.277]  A:xmpp:DC_XMPP:tim_xmpp_pubsub_subscription_call call for nuage_vsc_service_id_faaca6095200@vsd-1.mvdcunit02.us.alcatel-lucent.com ret status 1
+[018 h 11/30/16 18:09:59.281]  A:xmpp:DC_XMPP:tim_xmpp_msg_ehandler
+[018 h 11/30/16 18:09:59.283]  A:xmpp:DC_XMPP:tim_xmpp_process_msg type 4
+[018 h 11/30/16 18:09:59.285]  A:xmpp:DC_XMPP:tim_xmpp_cna_server_get_available
+[018 h 11/30/16 18:09:59.286]  A:xmpp:DC_XMPP:tim_xmpp_process_nuage Domain: DefaultDomain CNA Server: cna@vsd-1.mvdcunit02.us.alcatel-lucent.com/nuage
+[018 h 11/30/16 18:09:59.289]  A:xmpp:DC_XMPP:tim_xmpp_process_msg mgmt pending: 0 vxTicks 6491135 now: 0 msgs outstanding: 0
+
+[018 h 11/30/16 18:09:59.292]  A:xmpp:DC_XMPP:tim_xmpp_log_handler conn SENT: <message to="cna@vsd-1.mvdcunit02.us.alcatel-lucent.com/nuage"><nuage xmlns="alu:nuage:message"><cloudmgmt nodeType="VSC" xmlns="http://www.nuagenetworks.net/2013/controller/Request" version="4.0.6"><message xmlns="http://www.nuagenetworks.net/2013/controller/Message" type="SYSTEM-MONITORING"><header><seq-num>1480529399</seq-num></header><sysmon><type>VSC</type><version>C-0.0.current-d7283a</version><health><status>UP</status><cpu><peak>1.87</peak><average>1.11</average><current>5.90</current></cpu><memory><peak>39.31</peak><average>38.24</average><current>39.31</current></memory><disks><disk unit="MB"><name>cf1:</name><used>0</used><available>1033</available><total>1033</total></disk><disk unit="MB"><name>cf2:</name><used>63</used><available>202</available><total>266</total></disk></disks></health><vsc><managementip>10.31.40.96</managementip><vsds><vsd>cna@vsd-1.mvdcunit02.us.alcatel-lucent.com/nuage</vsd></vsds></vsc></sysmon></messhell hostAddshell tim_xmpp_set_debug 0 0                                     sage>
+Result of 'tim_xmpp_set_debug' = 0 = 0x0 vsd-1.mvdcunit02.us.alcatel-lucent.com
+*
+#+END_LOGS
+
+* Multiple VSD (show vswitch-controller vsd detail)
+** Maintain multiple VSD servers in a list with most recent first. (tim_xmpp_cna_server_add)

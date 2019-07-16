@@ -1,0 +1,24 @@
+BGP Flow:
+
+/usr/bin/ovsdb-client transact '["Open_vSwitch", {"op" : "insert", "table" : "Nuage_Route" ,"row" : { "prefix": "200.0.0.0/8", "nexthops" : "{\"ip\":\"41.1.1.2\",\"evpn_id\":\"477097639\"}","route_owner":"NuageBgp", "vrf_id": 1679745006 } } ]'
+
+LOCAL + CE flow:
+ovs-ofctl add-flow alubr0 "flow_type=route,ip,flags=ecmp,vrf_id=1679745006,nw_dst=300.0.0.0/8,n_hop=0|0|2,nhop_flag=local_ce,tep_addr=41.1.1.1,nhop_flag=local_ce,tep_addr=41.1.1.2"
+
+ovs-ofctl add-flow alubr0 "flow_type=route,ip,flags=ecmp,vrf_id=1679745006,nw_dst=300.0.0.0/8,n_hop=0|0|1,nhop_flag=local_ce,tep_addr=41.1.1.1"
+
+
+
+
+
+
+
+Old flows for BGP: 
+
+[root@ovs-1 scripts]# ovs-appctl bridge/dump-flows alubr0 | grep '200.0.0.0/8'table_id=13, duration=6s, n_packets=0, cookie:0x1 n_bytes=0, priority=32787,vrf_id=0x641edfee,ip,reg17=0x1000000/0x1000000,nw_dst=200.0.0.0/8,actions=load:0->NXM_NX_REG5[],resubmit(,30),multipath(symmetric_l3l4+udp,0,iter_hash<3>,1,0,0,0,NXM_NX_REG2[]),resubmit(,17)
+table_id=17, duration=6s, n_packets=0, cookie:0x1 n_bytes=0, priority=32787,vrf_id=0x641edfee,ip,reg2=0x0,reg17=0x1000000/0x1000000,nw_dst=200.0.0.0/8,actions=create_sticky_ecmp,load:0x29010102->NXM_NX_REG4[],resubmit(,31),pause(255)
+table_id=31, duration=6s, n_packets=0, cookie:0x1 n_bytes=0, priority=32787,vrf_id=0x641edfee,ip,reg4=0x29010102,reg5=0x0,nw_dst=200.0.0.0/8,actions=push:NXM_OF_IP_DST[],mod_nw_dst:41.1.1.2,resubmit(,13),pause(1)
+table_id=52, duration=6s, n_packets=0, cookie:0x1 n_bytes=0, priority=32777,ip,reg1=0x0/0x80000000,nw_dst=200.0.0.0/8,actions=set_vrf_id:0x641edfee
+[root@ovs-1 scripts]#
+[root@ovs-1 scripts]#
+

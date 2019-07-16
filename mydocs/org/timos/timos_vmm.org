@@ -1,0 +1,53 @@
+#+TITLE Timos Memory Manager
+* Cons of VxWorks:
+** Flat memory therefore if memory crash happens then no recovery, you need to reboot the box.
+** Unlike Linux where the process can restart with other processes still running.
+** VxWorks memory is very slow therefore slow allocation.
+*** To avoid this take memory in blocks. We use 1MB blocks.
+*** memPartAlloc/free vxworks sys calls.
+*** Application use tmm with number of bytes required with MOD_ID.
+*** Each module has memory pools which is instance of memory manager.
+*** When Application request memory:
+**** Walk the free list with increments of X bytes. Each TMM has a lock. (tmm.c)
+**** When the allocated memory gets to application it has 16 byte header.
+**** Header has next pointer, size.
+** All tasks contend for Kernel lock.
+** Fragmentation.
+*** Fixed size memory manager. (fsmem)
+**** expected mem size falls in m1 to m2 range(m2 - m1 is very small(<4K)) then very less fragmentation.
+**** if mem chunks is very varied like 16 bytes to 64K bytes then fragmentation is very big.
+**** fsmem will take num chunks and chunk size. Allocation is O(1) and freeing is O(1). FSMEM operates on TMM.
+**** fsmem uses chunks and when filled then get new block. fsmem chunks are not freed instanteneosly but when all the chunks are freed.
+**** 1 chunk has 12 bytes header. It has owner, magic number and next free pointer.
+*** dfrag_mgr: (fsmem.c)
+**** If you do not want to take care with fsmem then dfrag_mgr is what you need to use.
+**** It uses dfragMalloc which has fsmem chunks each with 4K chunks. App need not worry till it uses 512K byte memory.
+** Task T1 overriting T2 memory
+*** Lock not taken
+*** some bug
+*** accessing freed memory
+*** memory leak.
+**** added debugger inside TMM.
+**** kernel commands memDebug Enable/disable.
+
+* Pros
+** Flat memory therefore read/write is very fast.
+** Easy memory leak detection.
+** No dealing with paging and stuff.
+
+* Timos implementation:
+** Lowest layer TMM
+** Encap TMM is fsmem
+** Encap fsmem is dfrag.
+* Memory Debug
+** memory pools are nothing but TMM modules.
+** Debugger is built inside TMM.
+** Callpath is nothing but tree of function calls. To debug memory the debugger creates a callpath and then creates a hash value and store it in a table so that you dont need to store the full callpath every time.
+* Pointer Checks
+** It stores 1 bit for 1 byte. Ex: 256MB for 2 GB of memory.
+** Ex: allocate 128 bytes.
+** To find is the build is pointer check: shell isPtrChckBuild.
+
+* Semaphores:
+** syncSem -> give message and indicate using syncSemaphore
+** semTake -> use this to wake on the syncSemaphore to know something got added to queue.

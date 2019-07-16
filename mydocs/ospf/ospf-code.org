@@ -1,0 +1,5 @@
+* RTB_EntireTableCalc:
+** SPF process begin: check for memory in system.
+** Calculate Intra area: internal routes, dest type = ABR
+*** Loop RTR-Lsa's to prepare candidate list.
+***

@@ -1,0 +1,143 @@
+*A:Dut-B>config>service>vprn# info
+----------------------------------------------
+            route-distinguisher 2:11
+            interface "int-1" create
+                address 20.0.0.162/24
+                mac 00:00:00:00:00:01
+                sap 1/1/21:11 create
+                exit
+            exit
+            ospf
+                area 0.0.0.10
+                    interface "int-1"
+                        authentication-type message-digest
+                        message-digest-key 1 md5 "wg.rNTdTCtkewCukaCKIQeKFQV7dmGD7EYIJYBm3JjQ" hash2
+                        no shutdown
+                    exit
+                exit
+                no shutdown
+            exit
+            no shutdown
+----------------------------------------------
+
+            route-distinguisher 2:101
+            interface "int-1" create
+                address 20.0.0.132/24
+                mac 00:00:00:00:00:01
+                sap 1/1/21:101 create
+                exit
+            exit
+            ospf
+                area 0.0.0.10
+                    interface "int-1"
+                        no shutdown
+                    exit
+                exit
+                no shutdown
+            exit
+            no shutdown
+
+
+
+OSPF OVFCTL Rules:
+=================================================
+ovs-ofctl  add-flow alubr0 --flow-format=NXM+table_id 'table=4,priority=4,ip,nw_proto=89,actions=move:NXM_ALU_VRF_ID[]->NXM_OF_ETH_DST[0..31],output:7'
+ovs-ofctl  add-flow alubr0 --flow-format=NXM+table_id 'table=4,priority=8,in_port=7,ip,nw_proto=89,actions=resubmit(,27)'
+ovs-ofctl add-flow alubr0 --flow-format=NXM+table_id 'in_port=7,priority=8,table=13,ip,nw_proto=89,action=move:NXM_OF_ETH_SRC[0..31]->NXM_ALU_VRF_ID[],resubmit(,13)'
+
+Old rules:
+=========================
+ovs-ofctl  add-flow alubr0 --flow-format=NXM+table_id 'table=4,priority=4,ip,nw_proto=89,actions=FLOOD,output:7,move:NXM_ALU_VRF_ID[]->NXM_OF_ETH_DST[0..31],output:7'
+ovs-ofctl  add-flow alubr0 --flow-format=NXM+table_id 'table=4,priority=8,in_port=7,ip,nw_proto=89,actions=resubmit(,27)'
+ovs-ofctl add-flow alubr0 --flow-format=NXM+table_id 'in_port=7,priority=8,table=13,ip,nw_proto=89,action=move:NXM_OF_ETH_SRC[0..31]->NXM_ALU_VRF_ID[],resubmit(,13)'
+
+New Rules:
+=========================
+ovs-ofctl  add-flow alubr0 --flow-format=NXM+table_id 'table=4,priority=3,ip,nw_proto=89,nw_dst=20.0.0.1,actions=move:NXM_ALU_VRF_ID[]->NXM_OF_ETH_DST[0..31],output:7'
+ovs-ofctl  add-flow alubr0 --flow-format=NXM+table_id 'table=4,priority=4,ip,nw_proto=89,nw_dst=224.0.0.5/16,actions=FLOOD,set_evpn_id:1802571551,move:NXM_ALU_VRF_ID[]->NXM_OF_ETH_DST[0..31],output:7'
+ovs-ofctl  add-flow alubr0 --flow-format=NXM+table_id 'table=4,priority=8,in_port=7,ip,nw_proto=89,actions=resubmit(,27)'
+ovs-ofctl add-flow alubr0 --flow-format=NXM+table_id 'in_port=7,priority=8,table=13,ip,nw_proto=89,action=move:NXM_OF_ETH_SRC[0..31]->NXM_ALU_VRF_ID[],resubmit(,13)'
+
+Hello flood
+=================
+ovs-ofctl add-flow alubr0 --flow-format=NXM+table_id in_port=7,priority=65530,table=13,ip,nw_proto=89,nw_dst=224.0.0.5/16,nw_src=20.0.0.1,action=move:NXM_OF_ETH_SRC[0..31]\-\>NXM_ALU_VRF_ID[],load:0x01005E000000\-\>NXM_OF_ETH_DST[0..47],move:NXM_OF_IP_DST[0..22]\-\>NXM_OF_ETH_DST[0..22],set_evpn_id:1802571551,FLOOD
+
+
+
+ovsdb-client -v transact '["NuageBgp", {"op": "update", "table": "PolicyStatement", "where": [["a_name", "==","_nuage_int_pol_vexp_1403528897"]], "row": {"entries": "\nentry 10\nfrom protocol bgp\naction accept\naction community add _nuage_int_comm_1403528897\nentry 20\nfrom protocol nvc-local\naction accept\naction community add _nuage_int_comm_1403528897\nentry 30\nfrom protocol direct\naction accept\naction community add _nuage_int_comm_1403528897\nentry 40\nfrom protocol ospf\naction reject\naction community add _nuage_int_comm_1403528897\ndefault-action reject"}}]'
+
+ovsdb-client -v transact '["NuageBgp", {"op": "update", "table": "PolicyStatement", "where": [["a_name", "==","_nuage_int_pol_vexp_1403528897"]], "row": {"entries": "\nentry 10\nfrom protocol bgp\naction accept\naction community add _nuage_int_comm_1403528897\nentry 20\nfrom protocol nvc-local\naction accept\naction community add _nuage_int_comm_1403528897\nentry 30\nfrom protocol direct\naction accept\naction community add _nuage_int_comm_1403528897\nentry 40\nfrom protocol ospf\naction reject\ndefault-action reject"}}]'
+
+ovsdb-client -v transact '["NuageBgp", {"op": "update", "table": "PolicyStatement", "where": [["a_name", "==","_nuage_int_pol_vexp_1403528897"]], "row": {"entries": "\nentry 10\nfrom protocol bgp\naction accept\naction community add _nuage_int_comm_1403528897\nentry 20\nfrom protocol nvc-local\naction accept\naction community add _nuage_int_comm_1403528897\nentry 30\nfrom protocol direct\naction accept\naction community add _nuage_int_comm_1403528897\ndefault-action reject"}}]'
+
+
+"\nentry 10\nfrom protocol bgp\naction accept\naction community add _nuage_int_comm_1403528897\nentry 20\nfrom protocol nvc-local\naction accept\naction community add _nuage_int_comm_1403528897\nentry 30\nfrom protocol direct\naction accept\naction community add _nuage_int_comm_1403528897\nentry 40\nfrom protocol ospf\naction accept\naction community add _nuage_int_comm_1403528897\ndefault-action accept"
+
+ovsdb-client -v transact '["NuageBgp", {"op": "update", "table": "OspfInstance", "where": [["vrId","==",1313350216]], "row":{"superBackBone":true}}]'
+
+ovsdb-client -v transact '["NuageBgp", {"op": "update", "table": "PolicyStatement", "where": [["a_name", "==","_nuage_int_pol_vexp_1500006880"]], "row": {"entries": "\nentry 10\nfrom protocol bgp-vpn\naction accept\ndefault-action accept"}}]'
+
+
+\nentry 10\nfrom protocol bgp-vpn\naction accept\ndefault-action reject
+
+
+
+
+
+
+BGP policy:
+----------------------------------------------------------------
+
+ovsdb-client -v transact '["NuageBgp", {"op": "update", "table": "PolicyStatement", "where": [["a_name", "==","_nuage_int_pol_vexp_655228462"]], "row": {"entries": "\nentry 10\nfrom protocol bgp\naction accept\naction community add _nuage_int_comm_655228462\nentry 20\nfrom protocol nvc-local\naction accept\naction community add _nuage_int_comm_655228462\nentry 30\nfrom protocol direct\naction accept\naction community add _nuage_int_comm_655228462\nentry 50\nfrom protocol ospf\nto protocol bgp-vpn\naction reject\nentry 60\nfrom protocol  bgp-vpn\naction accept\naction community add _nuage_int_comm_655228462\ndefault-action accept"}}]'
+
+ovsdb-client -v transact '["NuageBgp", {"op": "update", "table": "BgpGlobal", "where": [["vrf", "==",655228462]], "row": {"vrf_export": "_nuage_int_pol_vexp_655228462"}}]'
+
+ovsdb-client -v transact '["NuageBgp", {"op": "update", "table": "PolicyStatement", "where": [["a_name", "==","_nuage_int_pol_vexp_1399214332"]], "row": {"entries": "\nentry 10\nfrom protocol bgp\naction accept\naction community add _nuage_int_comm_1399214332\nentry 20\nfrom protocol nvc-local\naction accept\naction community add _nuage_int_comm_1399214332\nentry 30\nfrom protocol direct\naction accept\naction community add _nuage_int_comm_1399214332\ndefault-action reject"}}]'
+
+nuage-bgp-ovsdb conf-bgp-policy 1243853374 1 1 1 1 '{  "msg-type": "baseline",  "policy": [    {      "name": "exportAll",      "default-action": "ACCEPT",      "xml-definition": "<?xml version=\\\\\\\"1.0\\\\\\\" encoding=\\\\\\\"UTF-8\\\\\\\"?><routing-policy xmlns=\\\\\\\"alu:nuage:bgp:routing:policy\\\\\\\"><policy-definition><statements><statement><name>entry_1</name><conditions><install-protocol-eq>BGP</install-protocol-eq></conditions><actions><accept-route-set><accept-route /></accept-route-set></actions></statement></statements><default-action><accept-route-set><accept-route /></accept-route-set></default-action></policy-definition></routing-policy>"}],  "msg-ver": 2,  "oper": "add",  "cust-id": 10005}'
+
+
+
+/usr/bin/nuage-bgp-ovsdb conf-bgp-neighbor 1 0 0 1 0 "{\"msg-ver\": 2, \"msg-type\": \"dynamic\", \"neighbor\":[{\"vrf-id\": 76637714, \"vrf-name\": \"ncpeDomain1\", \"peer-ip\": \"10.10.10.10\", \"type\": \"vport\", \"evpn-id\": \"1583310713\", \"vrf-rd\": \"65534:46036\", \"vrf-rt\": \"target:65534:65118\", \"subnet\": \"20.0.1.1\", \"mask\": 24, \"peer-as\": 200, \"family\": \"IPV4\", \"damping\": false, \"cust-id\": 1916691311, \"local-as\": 200, \"router-id\": \"7.147.154.18\"}]}"
+
+/usr/bin/nuage-bgp-ovsdb conf-bgp-neighbor 1 0 0 1 0 "{\"msg-ver\": 2, \"msg-type\": \"dynamic\", \"neighbor\":[{\"vrf-id\": 76637714, \"vrf-name\": \"ncpeDomain1\", \"peer-ip\": \"10.10.10.10\", \"type\": \"vport\", \"evpn-id\": \"1583310713\", \"vrf-rd\": \"65534:46036\", \"vrf-rt\": \"target:65534:65118\", \"subnet\": \"20.0.1.1\", \"mask\": 24, \"peer-as\": 200, \"family\": \"IPV4\", \"damping\": false, \"cust-id\": 1916691311, \"local-as\": 200, \"router-id\": \"7.147.154.18\"}]}"
+
+
+
+{  "msg-type": "baseline",  "policy": [    {      "name": "exportAll",      "default-action": "ACCEPT",      "xml-definition": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><routing-policy xmlns=\"alu:nuage:bgp:routing:policy\"><policy-definition><statements><statement><name>entry_1</name><conditions><install-protocol-eq>BGP</install-protocol-eq></conditions><actions><accept-route-set><accept-route /></accept-route-set></actions></statement></statements><default-action><accept-route-set><accept-route /></accept-route-set></default-action></policy-definition></routing-policy>"}],  "msg-ver": 2,  "oper": "add",  "cust-id": 10005}
+
+nuage
+EU4eEKj97J
+su
+2UnBaKCKg9
+ovs-appctl -t nuage-rpc vlog/set info
+ovs-appctl -t nuage-rpc vlog/disable-rate-limit
+tailf /var/log/openvswitch/nuage-rpc.log
+
+touch /tmp/start-bgpd-log
+
+shell hostAdd vsd-1.mvdcdev15.us.alcatel-lucent.com 10.31.47.126
+
+<?xml version="1.0" encoding="UTF-8"?>
+<routing-policy xmlns="alu:nuage:bgp:routing:policy">
+  <policy-definition>
+    <statements>
+      <statement>
+        <name>entry_2</name>
+        <conditions>
+          <install-protocol-eq>STATIC</install-protocol-eq>
+        </conditions>
+        <actions>
+          <reject-route />
+        </actions>
+      </statement>
+    </statements>
+    <default-action>
+      <accept-route-set>
+        <accept-route />
+         <set-tag>123456</set-tag>
+      </accept-route-set>
+    </default-action>
+  </policy-definition>
+</routing-policy>
+

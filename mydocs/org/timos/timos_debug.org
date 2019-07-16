@@ -1,0 +1,5 @@
+* Debug pointercheck or memory crash
+** disassemble <fnName>
+** match the crash output with this output to find the place where the crash happened.
+** shell tracePatchFn
+** kernel -> trc_<fnName>=0 to reset

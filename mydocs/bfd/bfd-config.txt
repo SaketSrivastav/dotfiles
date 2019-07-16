@@ -1,0 +1,214 @@
+########################################################
+GASH SETUP
+########################################################
+reconnect
+setXmppGlobalVars
+SGV vspSetupType vrsgScale
+vspSetup
+source /home/nthangav/ws/gash/testsuites/dc_bgp/bgp_bfd.tcl
+dcBgpBfdTests
+
+
+nuage-bfd-ovsdb conf-bfd-vprn-int 1 '{"domain":"2","ifIndex":"1585b50a-c8ef-4655-a7e2-b7509d836d57","transmitInt":"100","receiveInt":"100","multiplier":"3","echoInt":"100","l2SvcId":"1970174297"}' --audit-ver "1.1.1.1
+
+nuage-bfd-ovsdb conf-bfd-vprn-int 1 '{"domain":2,"ifIndex":"1585b50a-c8ef-4655-a7e2-b7509d836d57","transmitInt":100,"receiveInt":100,"multiplier":3,"echoInt":100,"l2SvcId":1970174297}' --audit-ver 1.1.1.1
+
+*A:Dut-B>config>service>vprn# info
+----------------------------------------------
+            route-distinguisher 3:101
+            interface "ovs1-port3-vlan101" create
+                address 100.100.100.20/24
+                bfd 1000 receive 1000 multiplier 3 echo-receive 100
+                sap 1/1/21:101 create
+                exit
+            exit
+            ospf
+                area 0.0.0.1
+                    interface "ovs1-port3-vlan101"
+                        bfd-enable
+                        no shutdown
+                    exit
+                exit
+                no shutdown
+            exit
+            no shutdown
+----------------------------------------------
+
+Static Route:
+*A:Dut-B>config>service>vprn$ info
+----------------------------------------------
+            router-id 20.0.2.100
+            autonomous-system 200
+            route-distinguisher 4:20
+            interface "access-1" create
+                address 20.0.2.100/24
+                bfd 1000 receive 100 multiplier 3
+                sap 1/1/22:20 create
+                exit
+            exit
+            static-route-entry 1.1.1.1/32
+                next-hop 20.0.2.1
+                    bfd-enable
+                    no shutdown
+                exit
+            exit
+            bgp
+                connect-retry 1
+                keepalive 5
+                hold-time 15
+                min-route-advertisement 1
+                export "defaultExport"
+                local-as 200
+                router-id 20.0.2.100
+                split-horizon
+                group "access-31"
+                    neighbor 20.0.2.1
+                        family ipv4
+                        peer-as 200
+                        bfd-enable
+                    exit
+                exit
+                no shutdown
+            exit
+            no shutdown
+--------------------------------------------------------
+If sap creation fails check this config:
+--------------------------------------------------------
+
+*A:Dut-C>config>service>vprn# /configure port 1/1/22
+*A:Dut-C>config>port# info
+----------------------------------------------
+        ethernet
+            mode hybrid
+            encap-type dot1q
+        exit
+        no shutdown
+----------------------------------------------
+*A:Dut-C>config>port#
+
+config> router>
+
+interface "ip-10.10.4.2"
+            address 10.10.4.2/24
+            port 1/1/4
+            bfd 1000 receive 100 multiplier 3
+            no shutdown
+        exit
+
+
+
+table=13 cookie=0x1 priority=32836,vrf_id=0x2de6e816,ip,nw_dst=100.100.100.20
+
+ovs-ofctl  add-flow alubr0 --flow-format=NXM+table_id 'table_id=13, priority=32836,vrf_id=0x2de6e816,ip,nw_dst=100.100.100.20,actions=load:0x28->NXM_NX_REG5[],set_evpn_id:0x38399a44,resubmit(,12)'
+
+
+
+bfd rules:
+ovs-appctl dpif/show | grep bgp >> get the port number
+ovs-ofctl  add-flow alubr0 --flow-format=NXM+table_id 'table=4,priority=5,ip,nw_proto=17,vrf_id=770107414,nw_dst=100.100.100.1,actions=move:NXM_ALU_VRF_ID[]->NXM_OF_ETH_DST[0..31],output:7'   >> replace the obtained port number on left hand side with output:<port-number>
+
+ovs-ofctl add-flow alubr0 --flow-format=NXM+table_id 'in_port=7,priority=8,table=13,ip,nw_proto=17,action=move:NXM_OF_ETH_SRC[0..31]->NXM_ALU_VRF_ID[],resubmit(,13),mod_nw_ttl:255'
+
+ovs-ofctl del-flows alubr0 --flow-format=NXM+table_id 'in_port=5,table=4,ip,nw_proto=17'
+
+ovs-ofctl  add-flow alubr0 --flow-format=NXM+table_id 'table=4,priority=5,ip,nw_proto=17,vrf_id=1213860414,nw_dst=20.0.2.1,actions=move:NXM_ALU_VRF_ID[]->NXM_OF_ETH_DST[0..31],output:4'
+
+ovs-ofctl add-flow alubr0 --flow-format=NXM+table_id 'in_port=4,priority=8,table=13,ip,nw_proto=17,action=move:NXM_OF_ETH_SRC[0..31]->NXM_ALU_VRF_ID[],resubmit(,13),mod_nw_ttl:255'
+
+
+ofproto/trace : skb_priority(0),in_port(21),eth(src=fa:ac:a6:16:05:08/ff:ff:ff:ff:ff:ff,dst=68:54:ed:00:5a:76/00:00:00:00:00:00),eth_type(0x0800),ipv4(src=100.100.100.20/255.255.0.0,dst=100.100.100.1/255.255.255.255,proto=17/0xff,tos=0xc0/0,ttl=255/0xff,frag=no/0xff)
+
+
+
+
+
+sys.path.append ('/usr/share/openvswitch/python') 
+sys.path.append ('/usr/share/openvswitch/python/ovs') 
+
+ovsdb-client -v transact '["Open_vSwitch", {"op": "update", "table": "Nuage_Route", "where": [["vrf_id", "==", 737119285],["route_owner", "==", "NuageStatic"],["prefix", "==", "1.1.1.1/32"]], "row": {"nexthops":"{\"ip\":\"41.1.1.2\", \"evpn_id\":\"1189606560\"}"}}]'
+
+ovsdb-client -v transact '["Open_vSwitch", {"op": "delete", "table": "Nuage_Nexthop", "where": [["vrf_id", "==", 737119285],["nexthop", "==", "41.1.1.2"]]}}]'
+
+
+ovsdb-client -v transact '["Open_vSwitch", {"op": "insert", "table": "Nuage_Nexthop", "row":{"vrf_id":737119285,"nexthop":"41.1.1.2","timstamp":"1","active":"Y","version":"0"}}}]'
+
+ovs-ofctl  add-flow alubr0 --flow-format=NXM+table_id 'table=4,priority=5,ip,nw_proto=17,vrf_id=1935099070,nw_dst=41.1.254.254,actions=move:NXM_ALU_VRF_ID[]->NXM_OF_ETH_DST[0..31],output:4'
+
+ovs-ofctl add-flow alubr0 --flow-format=NXM+table_id 'in_port=4,priority=8,table=13,ip,nw_proto=17,action=move:NXM_OF_ETH_SRC[0..31]->NXM_ALU_VRF_ID[],resubmit(,13),mod_nw_ttl:255'
+
+
+ovsdb-client -v transact '["Open_vSwitch", {"op": "delete", "table": "Nuage_Nexthop", "where": [["vrf_id", "==", 1004772401]]}]'
+
+ovsdb-client -v transact '["Open_vSwitch", {"op": "delete", "table": "Nuage_Nexthop", "where": [["vrf_id", "==", 1004772401],["nexthop","==","41.1.1.100"]]}]'
+
+ovsdb-client -v transact '["Open_vSwitch", {"op": "insert", "table": "Nuage_Nexthop", "row":{"vrf_id":1004772401,"nexthop":"41.1.1.100","timstamp":"1","active":"A","version":"0"}}]'
+
+
+
+
+
+Existing VRS rules for Static route:
+======================================
+[root@ovs-1 ~]# ovs-appctl bridge/dump-flows alubr0 | grep id=13 | grep '6.6.6.6'                                                                                            
+table_id=13, duration=257737s, n_packets=0, cookie:0x2 n_bytes=0, priority=32834,vrf_id=0x2bef8c35,ip,nw_dst=6.6.6.6,actions=load:0x83->NXM_NX_REG5[],resubmit(,30),multipath(symmetric_l4,0,iter_hash<3>,1,0,0,0,NXM_NX_REG2[]),dec_ttl,resubmit(,17)
+[root@ovs-1 ~]#
+[root@ovs-1 ~]# ovs-appctl bridge/dump-flows alubr0 | grep id=17 | grep '6.6.6.6'
+table_id=17, duration=258887s, n_packets=0, cookie:0x2 n_bytes=0, priority=32835,vrf_id=0x2bef8c35,ip,reg2=0x0,nw_dst=6.6.6.6,actions=create_sticky_ecmp,load:0x6060606->NXM_NX_REG4[],resubmit(,31),pause(255)
+[root@ovs-1 ~]#
+[root@ovs-1 ~]# ovs-appctl bridge/dump-flows alubr0 | grep id=31 | grep '6.6.6.6'
+table_id=31, duration=258923s, n_packets=0, cookie:0x2 n_bytes=0, priority=32835,vrf_id=0x2bef8c35,ip,reg4=0x29010102,reg5=0x0,nw_dst=6.6.6.6,actions=push:NXM_OF_IP_DST[],mod_nw_dst:41.1.1.2,resubmit(,13),pause(1)
+
+
+
+
+
+
+
+
+Dut-C:
+
+route-distinguisher 1000:1000
+            interface "test1" create
+                address 41.1.1.100/16
+                icmp
+                    no redirects
+                exit
+                bfd 100 receive 100 multiplier 3
+                ipv6
+                    address 2001:41:1::199/64
+                    bfd 100 receive 100 multiplier 3
+                exit
+                sap 1/1/4:2 create
+                exit
+            exit
+            static-route-entry 0.0.0.0/0
+                next-hop 41.1.254.254
+                    bfd-enable
+                    no shutdown
+                exit
+            exit
+            static-route-entry ::/0
+                next-hop 2001:41:1::1
+                    bfd-enable
+                    no shutdown
+                exit
+            exit
+            no shutdown
+
+
+Dut-B:
+ route-distinguisher 1000:1000
+            interface "test1" create
+                mac 00:ff:ff:ff:ff:ff
+                bfd 100 receive 100 multiplier 3
+                sap 1/1/1:3 create
+                exit
+            exit
+            static-route-entry 0.0.0.0/0
+                next-hop 41.1.254.254
+                    bfd-enable
+                    no shutdown
+                exit
+            exit
+            no shutdown
+

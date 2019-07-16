@@ -1,0 +1,15 @@
+dcBgpBfd:
+
+if { $ovs == "4" } {
+       set dut "B"
+       set port "1/1/7"
+   } elseif { $ovs == "1" } {
+       set dut "B"
+       set port "1/1/1"
+   } elseif { $ovs == "2" } {
+       set dut "C"
+       set port "1/1/4"
+   } elseif { $ovs == "3" } {
+       set dut "C"
+       set port "1/1/12"
+   }

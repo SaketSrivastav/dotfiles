@@ -1,0 +1,20 @@
+* Gw Cfg
+** priority, one-way-delay, topic, seq-num, id
+** Send DG id, priority, delay update to NSG(nvcNsgSendDucGroupInfo)
+** schedule duc request
+
+* Duc Response (nvcProcessDucGroupCfgPlcyMsg)
+** DG id, name, DUC List, probe
+** Add DG and NSG bind if DUC is local to VSC
+** Add/update duc from list based on genid
+** Handle probe and probe update
+** Send DG and duc list update to NSG
+** Send duc info to all NSG where DG and NSG bind exist.
+
+* DATA Structures
+** nvcDucGroup
+** nvcDucGroupNsgBind
+
+* DUC Uplink RTM
+** Receive PDU as part of nvcPduReceiveBRPortInfo. Get vlan, flags, underlayId, uplinkId and advCriteria.
+** Add duc port route add.

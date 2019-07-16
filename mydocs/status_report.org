@@ -1,0 +1,6 @@
+*  Week Nov 12 to Nov 17
+** Fixed VRS-17986 by not sending fake RUNNING vm event to VSC even when VM is in
+  shut off state.
+** Changed OF and XMPP version to 5.4.1 on VSC and VCA.
+** Code completed aggregate flows feature.
+** Fixed bugs SROS-18803, SROS-17627, VRS-18075.

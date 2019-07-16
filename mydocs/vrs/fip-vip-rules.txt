@@ -1,0 +1,21 @@
+VIP : 100.0.1.3
+FIP: 200.0.0.19
+
+
+root@ovs-3:~# ovs-appctl bridge/dump-flows alubr0 | grep 100.0.1.3
+
+table_id=12, duration=2428s, n_packets=10, cookie:0x1 n_bytes=540, priority=32804,vrf_id=0x615c83be,evpn_id=0x87eafe4,ip,nw_dst=100.0.1.3,actions=load:0xc2->NXM_NX_REG5[],mod_dl_dst:00:15:27:12:57:30,mod_dl_src:68:54:ed:00:89:7f,resubmit(,11)
+table_id=13, duration=2428s, n_packets=10, cookie:0x1 n_bytes=540, priority=32836,vrf_id=0x615c83be,ip,reg17=0x1000000/0x1000000,nw_dst=100.0.1.3,actions=load:0xc3->NXM_NX_REG5[],set_evpn_id:0x87eafe4,dec_ttl,resubmit(,12)
+table_id=13, duration=2428s, n_packets=10, cookie:0x1 n_bytes=540, priority=32834,vrf_id=0x3b1c84f5,ip,reg17=0x1000000/0x1000000,nw_dst=200.0.0.19,actions=load:0xc4->NXM_NX_REG5[],set_vrf_id:0x615c83be,mod_nw_dst:100.0.1.3,load:0xffffffff->NXM_NX_REG11[],resubmit(,13)
+table_id=13, duration=2428s, n_packets=10, cookie:0x1 n_bytes=540, priority=16387,vrf_id=0x615c83be,ip,reg17=0x1000000/0x1000000,in_port=21,nw_src=100.0.1.3,actions=mod_nw_src:200.0.0.19,set_vrf_id:0x3b1c84f5,resubmit(,13)
+table_id=60, duration=2553s, n_packets=20, cookie:0x1 n_bytes=1080, priority=32769,ip,in_port=21,nw_src=100.0.1.3,actions=acl_allow
+
+
+
+
+
+root@ovs-3:~# ovs-appctl bridge/dump-flows alubr0 | grep 200.0.0.19
+
+table_id=13, duration=2551s, n_packets=10, cookie:0x1 n_bytes=540, priority=32834,vrf_id=0x3b1c84f5,ip,reg17=0x1000000/0x1000000,nw_dst=200.0.0.19,actions=load:0xc4->NXM_NX_REG5[],set_vrf_id:0x615c83be,mod_nw_dst:100.0.1.3,load:0xffffffff->NXM_NX_REG11[],resubmit(,13)
+table_id=13, duration=2551s, n_packets=10, cookie:0x1 n_bytes=540, priority=16387,vrf_id=0x615c83be,ip,reg17=0x1000000/0x1000000,in_port=21,nw_src=100.0.1.3,actions=mod_nw_src:200.0.0.19,set_vrf_id:0x3b1c84f5,resubmit(,13)
+

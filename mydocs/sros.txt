@@ -1,0 +1,40 @@
+RTM:
+- It is a trie datastructure.
+- Routes gets feed in from BGP, ISIS, OSPF etc into it.
+- If same routes gets feed in to it by different protocol then it is stored in link list.
+- Each route has NextHopInfo which could be max 16
+- Each NHInfo will have outIfd, NH, NHINfo
+- Each NHInfo has some protocol info and this is an opaque handle which each protocol has to add info about them.
+- All are direct Inline calls
+- ADD / MODIFY / DEL are O(log n)
+- Bottleneck is the LOCKS that each protocol take while doing an action on RTM.
+- Destinations for this entry are other protocols, IDM, and other application like RT Cache, NH Resolution Client
+- When routes gets sent to other protocols then export policy gets applied on them.
+- RTMD: blocks on the semaphore (sync_sem)
+- Process Routes: for all users executes callback api, this executes in context of RTMD. RTMD applies export policy on routes and then if it passes then puts it in a queue and the user can access it.
+- Process Cmds: Ex: Suppose if RIB has come up so it issues a command to RTM "Browse all routes; callbacks"
+
+
+Q) If I have a million routes and change happened to only 100 routes then how RTMDB handles it?
+A) RTM stores routes as Trie, RTMD sees routes as a Temporal list which is nothing but a DLL. There is a latchat the last node of this DLL whihc marks the last updated part of the list. When a new request comes for add/modify/delete the users of RTM will read event s from this latch onwards so they dont need to traverse the list again. Suppose a new user comes in for RTM routes then RTMD walks from the start of the list and then when the new user buffers gets filled then a new temporary latch is attached on the list.
+
+Q) How to manage 10000 VPRN?
+A)  1 VPRN = 1 route table, which is nothing but a separate RTM instance of core RTM table.
+      When a route gets added to main RTM and if it belongs to VPRN 1 then core RTM adds the route to VPRN 1 RTM instance.
+      RTMD do not care about what VPRN adding the routes to it. It just manages the temporal list that it forms from RTM
+      RTM: atic_l3_rtm.c
+      RTMD: tim_rtmd.c
+
+TTM:
+- Tunnel Table Manager, /32 routes
+- Same as RTM with difference of handle, in case of RTM you use RTM handle and in case of TTM you use TTM handle
+- TTMD1: ttmD1 task
+- Difference between RTM and TTM is that in RTM you use the best routes but in TTM we care about everything.
+
+NH Tracking:
+- For a group of NH find longest match
+- RT Cache tracks 1000 most recent destinations so that the whole IP stack does not go to RTM directly.
+- 
+
+
+

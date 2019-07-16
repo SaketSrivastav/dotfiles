@@ -1,0 +1,9 @@
+#########################################
+Emacs Git commands:
+#########################################
+
+git remote update --prune
+git checkout -b TiMOS-DC_5_2_current_sros_17287 official/TiMOS-DC_5_2_current
+git branch --unset-upstream TiMOS-DC_5_2_current_sros_17287
+git push -v origin TiMOS-DC_5_2_current_sros_17287\:refs/heads/TiMOS-DC_5_2_current_sros_17287
+

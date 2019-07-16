@@ -1,0 +1,575 @@
+--------------------------------------------------------------------------
+Configurations
+--------------------------------------------------------------------------
+
+#Rollback configuration
+---------------------------------------------
+configure system rollback rollback-location ftp://saketkus:tigris@172.21.32.44/./rb/rb
+shell rollbackLog ftp://saketkus:tigris@172.21.32.44/./rb/rb.log
+admin rollback save
+
+
+Port-profile configuration:
+------------------------------------------------
+configure services dynamic-services port-profile test create
+vlan range 200-202 mode push create
+back no shutdown
+exit all
+
+Lag Configuration:
+-------------------------------------------------
+configure lag 11
+encap-type dot1q 
+dynamic-services-profile test
+no shutdown
+exit all
+
+Static Peer:
+configure vswitch-controller open-flow static-peer 1.1.1.1 
+
+OVS:
+	JSON RPC:
+		timeout variations: vi /usr/bin/nuage-rpc
+				       LOG:	tail /var/log/openvswitch/nuage-rpc.log
+				       SHOW: ovs-vsctl show
+
+
+- Top create a port as VFL-port:
+    bof vfl-port <port-id>
+
+
+Dut Re-config
+---------------------------------------------------
+admin save ftp://saketkus:tigris@172.21.32.44:/./config-save/sros-9834.cfg
+
+Dut-G# admin reboot now
+shell hostAdd vsd-1.mvdcdev12.us.alcatel-lucent.com 135.227.150.100
+configure vswitch-controller xmpp-server vsd-1.mvdcdev12.us.alcatel-lucent.com
+exec ftp://saketkus:tigris@172.21.32.44:/./config-save/sros-9834.cfg
+
+
+CONFIG LOG:
+configure log log-id 12
+from debug-trace 
+to session
+exit all
+
+configure log log-id 13
+from debug-trace 
+to console
+exit all
+
+
+CONFIG TLS ON VSD:
+---------------------------------------------------
+grep starttls /opt/ejabberd/conf/ejabberd.yml
+
+/opt/vsd/bin/ejabberd-cert-gen     ----> Password: Alcateldc
+/opt/vsd/bin/ejabberd-secure allow|require
+/opt/vsd/sysmon/restart-ej.py
+
+/opt/vsd/ejbca/deploy/certMgmt.sh -a revoke -u Dut-G -c Dut-G -d mvdcdev12.us.alcatel-lucent.com -f pem -t server -o csp -s admin@135.227.150.97:/
+
+/opt/vsd/ejbca/deploy/certMgmt.sh -a generate -u Dut-G -c Dut-G -d mvdcdev47.us.alcatel-lucent.com -f pem -t server -o csp -s admin@10.31.33.146:/
+
+/opt/vsd/ejbca/deploy/certMgmt.sh -a generate -u saketkus-test_vsc -c saketkus-test_vsc -d host-102-82.openstacklocal -f pem -t server -o csp -s admin@10.31.102.83:/
+
+configure vswitch-controller open-flow
+server-key "cf1:\Dut-G-key.pem"
+server-certificate "cf1:\Dut-GCert.pem"
+ca-certificate "cf1:\Dut-G-CA.pem"
+authentication-type tls
+apply-tls-values
+exit all
+
+
+
+
+
+tls_mode require  -----> on vsc vsd is in Active state(tls_support = 0, tls_secured = 0, tls_required = 1) and does not go to Functional state 
+
+
+============================================================================================
+OVS
+============================================================================================
+
+General Config:
+-------------------------------------
+ovs-vsctl del-controller alubr0 ctrl1
+ovs-vsctl add-controller alubr0 ctrl1 tcp:172.21.39.29:6633 
+ovs-vsctl set c ctrl1 config_role=master
+ovs-vsctl del-controller alubr0 ctrl2
+ovs-vsctl add-controller alubr0 ctrl2 tcp:172.21.39.221:6633
+ovs-vsctl set c ctrl2 config_role=master
+ovs-vsctl list controller
+
+ovs-vsctl del-controller alubr0 ctrl1
+ovs-vsctl set-ssl certs/client.key certs/CAclient.crt certs/CA.crt
+ovs-vsctl add-controller alubr0 ctrl1 ssl:192.168.122.224:6633 
+ovs-vsctl set c ctrl1 config_role=master
+
+sudo ovs-vsctl del-controller alubr0 ctrl1
+sudo ovs-vsctl set-ssl certs/client.key certs/CAclient.crt certs/CA.crt
+sudo ovs-vsctl add-controller alubr0 ctrl1 tcp:10.31.102.83:6633 
+sudo ovs-vsctl set c ctrl1 config_role=master
+
+
+SSL Config:
+-------------------------------------
+ovs-vsctl del-controller alubr0 ctrl1
+ovs-vsctl set-ssl /root/certs/client.key /root/certs/CAclient.crt /root/certs/CA.crt
+ovs-vsctl add-controller alubr0 ctrl1 ssl:172.21.39.29:6633 
+ovs-vsctl set c ctrl1 config_role=master
+ovs-vsctl del-controller alubr0 ctrl2
+ovs-vsctl add-controller alubr0 ctrl2 ssl:172.21.39.221:6633
+ovs-vsctl set c ctrl2 config_role=slave
+
+OVSDB Config
+-------------------------------------
+ovs-vsctl del-controller alubr0 ctrl1
+ovs-vsctl set-ssl /tmp/certs/client.key /tmp/certs/CAclient.crt
+ovs-vsctl add-controller alubr0 ctrl1 ssl:172.21.39.29:6633 
+ovs-vsctl set c ctrl1 config_role=master
+
+
+For Resiliency:
+-------------------------------------
+ovs-vsctl del-controller alubr0 ctrl1
+ovs-vsctl del-controller alubr0 ctrl2
+ovs-vsctl set-ssl /tmp/certs/client.key /tmp/certs/client.crt /tmp/certs/CA.crt
+ovs-vsctl add-controller alubr0 ctrl1 ssl:172.21.39.29:6633 
+ovs-vsctl set c ctrl1 config_role=master
+ovs-vsctl add-controller alubr0 ctrl2 ssl:172.21.39.221:6633
+ovs-vsctl set c ctrl2 config_role=slave
+
+IP Verification Config:
+-------------------------------------
+ovs-vsctl del-controller alubr0 ctrl1
+ovs-vsctl set-ssl /tmp/certs/client2.key /tmp/certs/CAclient4alt.crt /tmp/certs/CA.crt
+ovs-vsctl add-controller alubr0 ctrl1 ssl:172.21.39.29:6633
+ovs-vsctl set c ctrl1 config_role=master
+
+
+Slave Controller:
+--------------------------------------
+ovs-vsctl add-controller alubr0 ctrl2 ssl:172.21.39.221:6633
+ovs-vsctl set c ctrl2 config_role=slave
+
+
+MD5 Config:
+--------------------------------------
+
+ovs-vsctl del-controller alubr0 ctrl1
+ovs-vsctl add-controller alubr0 ctrl1 tcp:172.21.39.29:6633
+ovs-vsctl set controller ctrl1 other_config:auth-type=md5 other_config:auth-key=nuage
+ovs-vsctl set c ctrl1 config_role=master
+ovs-vsctl list controller
+
+Script:
+--------------------------------------
+
+SIM 198:
+--------------------------------------
+exec ftp://root:tigris@172.21.32.44/./tftpboot/devsimgrp07/images/saketkus/config/devsimgrp07.cfg
+
+SIM 197:
+--------------------------------------
+exec ftp://root:tigris@172.21.32.44/./tftpboot/devsimgrp07/images/saketkus/config/devsimgrp06.cfg
+
+TACACS+ Configuration:
+--------------------------------------
+    -- install tacplus: https://networklessons.com/linux/how-to-install-tacacs-on-linux-centos/
+    -- Config:
+        user = tuser3 {
+            login = cleartext tpass3
+            member = privgroup
+        }
+        group = privgroup {
+            service = exec {
+             priv-lvl = 3
+        }
+    -- /etc/init.d/tac_plus start
+
+- priv-lvl mapping config:
+
+    *A:devsim0101>config>system>security# info 
+----------------------------------------------
+            telnet-server
+            profile "priv3"
+                default-action deny-all
+                entry 1
+                    match "show time"
+                    action permit
+                exit
+            exit
+            tacplus
+                authorization use-priv-lvl
+                priv-lvl-map
+                    priv-lvl 2 "priv3"
+                exit
+                server 1 address 135.227.222.31 secret "BRwzHjadZuUw46oe9TweY." hash2
+            exit
+----------------------------------------------
+
+in telnet session :
+
+~/ws/git-ws/00-f2/panos > telnet 172.21.39.221
+Trying 172.21.39.221...
+Connected to 172.21.39.221.
+Escape character is '^]'.
+TiMOS-C-0.0.private cpm/i386 ALCATEL SR 7750 Copyright (c) 2000-2015 Alcatel-Lucent.
+All rights reserved. All use subject to applicable license agreements.
+Built on Mon Jul 13 16:12:39 PDT 2015 by saketkus in /home/saketkus/ws/sros/00-1/panos/ma
+
+
+Login: tuser3
+Password: 
+
+Internal development build. Alcatel-Lucent confidential. NOT FOR CUSTOMER USE.
+
+*A:devsim0101# show service 
+MINOR: CLI Command not allowed for this user.
+*A:devsim0101# show time    
+MINOR: CLI Command not allowed for this user.
+*A:devsim0101# 
+*A:devsim0101# 
+*A:devsim0101# show time 
+MINOR: CLI Command not allowed for this user.
+
+--------------------------------------------------
+                Fast Trace
+--------------------------------------------------
+shell nvcFtInit
+shell nvcFtSetSize 10000
+shell nvcFtFilterSetMask 5 1
+shell nvcFtShow
+
+shell nvcFtSvcSetSize 10000
+shell nvcFtSvcShow
+
+tools perform vswitch-controller fast-trace enable
+tools perform vswitch-controller fast-trace buffer-size 10000
+
+--------------------------------------------------
+                Multichassis Lag
+--------------------------------------------------
+configure router interface "myLo"
+address 1.1.1.1/32
+loopback
+back
+vxlan multichassis-vtep "myLo"
+exit all
+
+
+--------------------------------------------------
+                UNIT TESTBED SETUP
+--------------------------------------------------
+
+gash -xmppServerIp 10.31.41.78 -xmppServerHostName vsd-1.mvdcunit04.us.alcatel-lucent.com
+shell hostAdd vsd-1.mvdcunit04.us.alcatel-lucent.com 10.31.41.78
+configure vswitch-controller xmpp-server vsd-1.mvdcunit04.us.alcatel-lucent.com
+configureDvrsSetup -trafficTest false -vmConsoleAccess true -numVmPerSubnet 2
+
+To bring up setup, 
+gash -xmppServerIp 10.31.41.58 -xmppServerHostName vsd-1.mvdcunit04.us.alcatel-lucent.com
+gash -xmppServerIp 10.31.40.143 -xmppServerHostName vsd-1.mvdcunit03.us.alcatel-lucent.com
+
+You will get the xmpp server ip and address from file images/esrcalls.tcl (look for vsd-1)
+
+From gash run: 
+Gateway Setup:
+    SwGwResSetup
+
+VM Based Setup:
+    configureDvrsSetup -trafficTest false -vmConsoleAccess true -numVmPerSubnet 1
+
+Setup CNS from gash:
+
+    set cnaSimNode cna-1
+    set xmppServer "$cnaSimNode.[exec hostname].us.alcatel-lucent.com"
+    set xmppServerAddr [$cnaSimNode getIp breth0]
+    set cnaSimGateway "true"
+    global env
+    set cnaSimTmplPath $env(HOME)/ws/gash/tools/CNA-Simulator/xml
+    cnaSim start -cnaSim $cnaSimNode -xmppSvr $cnaSimNode -cnaSimTmplPath $cnaSimTmplPath -cnaSimGateway $cnaSimGateway
+
+shell hostAdd cna-1.mvdcunit04.us.alcatel-lucent.com 10.31.41.58
+shell tim_xmpp_ignore_version 1
+
+All this gets configured on dut-G.
+Do an admin save on dut-G and on dut-H. Then load your image on the dut and reboot.
+
+Once it comes up with your image, execute the following on the controller. Also add these lines in dut-g.cfg and dut-h.cfg (images folder).
+
+shell hostAdd cna-1.mvdcunit04.us.alcatel-lucent.com 10.31.41.58
+shell hostAdd cna-1.mvdcunit03.us.alcatel-lucent.com 10.31.40.1201
+shell tim_xmpp_ignore_version 1
+
+On the controller, execute configure vswitch-controller xmpp-server cna-1.mvdcunit04.us.alcatel-lucent.com
+Any cna related errors are logged in /tmp/cnaSim.log. To see this log in to the cna (get ip from images/esrcalls.tcl) (root:tigris) and execute:
+
+[root@cna-1 ~]# cd /tmp/
+[root@cna-1 tmp]# tail -f cnaSim.log
+
+PIP Debug
+
+svcShow :
+    To dump a specific vrId, first do a "svcShow ", then pick up the VRtrId from that output and provide as input to "pipVrIdDump".
+
+pipVrIdDump : 
+    To show VPRN table info (use this to map cli configured VPRN ID to internal VPRN ID required in   other kernel commands. 
+
+pipDbIfUpLowShow <internal-vrid> : To show which interface ip will be used as the source IP in a sourced packet
+
+pipDbIfShow <vrid> <interface>
+
+iesShowAll : shows all the interfaces configured
+
+-------------------------------------------------------------------------------
+            VSD Mediator Logs - TO see what VSD is sending without enabling VSC
+-------------------------------------------------------------------------------
+cd /opt/vsd/mediator/
+./runMediatorLogLevel.bash -l DEBUG
+tail -f cna-mediator.log
+
+138.120.252.56, 128.251.10.25, 128.251.10.29, 128.251.10.25, 128.251.10.29, 
+labs.ca.alcatel-lucent.com, ca.alcatel-lucent.com, us.alcatel-lucent.com, mv.usa.alcatel.com, ih.lucent.com, sh.bel.alcatel.be
+
+
+VSD User:
+Add user to settings->Administrators
+
+IPv6 Configuration:
+------------------------------------------
+VSD: 
+
+Static IP:
+    PUT: https://10.31.41.78:8443/nuage/api/v4_0/subnets/092210ab-6e87-42f5-b90e-da64df0ca1be/
+     { "IPType" : "DUALSTACK",
+      "ipv6Address" : "1080::8:800:200C:417A/128"
+     }
+
+Dynamic:
+     PUT: https://10.31.41.78:8443/nuage/api/v4_0/subnets/092210ab-6e87-42f5-b90e-da64df0ca1be/
+     { "IPType" : "DUALSTACK",
+      "ipv6Address" : "1080:8:800:200C::/64"
+      "ipv6Gateway" : "1080:8:800:200C::1"
+     }
+
+VRS:
+    VM-request xml:
+          <metadata>
+            <nuage xmlns="http://www.nuagenetworks.net/2013/Vm/Metadata">
+              <user name="bob"/>
+              <enterprise name="Alcatel Lucent"/>
+              <nuage_network type="dualstack" name="P1" domain="domain1" zone="Nuage Zone">
+                <interface mac="00:10:26:19:63:52" ipv6-address="1080::8:800:200C:417A"/>
+                <!-- Dynamic <interface mac="00:10:26:19:63:52" /> -->
+              </nuage_network>
+            </nuage>
+          </metadata>
+
+
+
+
+
+
+
+
+
+
+
+TACACS:
+1) useradd user3
+2) copy file on ovs-1 testsuites/usr_mgt/tacacs_interactive
+3) LD_LIBRARY_PATH=/usr/global/lib /usr/global/bin/tac_plus -C <cfg file path> -B <ip addr of ovs-1> -p 49 -d128 g -L
+   LD_LIBRARY_PATH=/usr/global/lib /usr/global/bin/tac_plus -C tacacs/tacplus.cfg -B 10.31.33.45 -p 49 -d128 g -L
+4) Controller config
+configure system security profile tacplus3 default-action none
+configure system security profile tacplus3 entry 10 match "show time"
+configure system security profile tacplus3 entry 10 action permit
+configure system security profile tacplus3 entry 11 match "show version"
+configure system security profile tacplus3 entry 11 action deny
+configure system security profile tacplus3 entry 12 match "show users"
+configure system security profile tacplus3 entry 12 action permit
+configure system security profile tacplus3 entry 13 match "show card"
+configure system security profile tacplus3 entry 13 action deny
+configure system security profile tacplus3 entry 20 match "configure router"
+configure system security profile tacplus3 entry 20 action permit
+configure system security profile tacplus3 entry 21 match "configure system"
+configure system security profile tacplus3 entry 21 action deny
+configure system security profile tacplus3 entry 30 match "enable-admin"
+configure system security profile tacplus3 entry 30 action permit
+configure system security profile tacplus0 default-action none
+configure system security profile tacplus0 entry 10 match "show uptime"
+configure system security profile tacplus0 entry 10 action permit
+configure system security profile tacplus0 entry 11 match "show lag"
+configure system security profile tacplus0 entry 11 action deny
+
+
+
+
+configure system security password authentication-order tacplus local radius 
+configure system security tacplus 
+  server 1 address 10.31.33.45 secret t3333
+  interactive authentication
+  auth use-priv-lvl
+  priv-lvl-map 
+    priv-lvl 3 tacplus3
+    priv-lvl 5 administrative
+
+6) touch /usr/local/etc/skeykeys -> change permission using chmod to 777 of the file
+/usr/global/bin/skeyinit user3 give password as userskeypswd3
+
+7) configure system security user-template tacplus_default profile tacplus0
+8) enable-admin-control tacplus-map-to-priv-lvl 15
+
+
+
+
+*********************************** EXPRESS PBR DETAILS ***********************************
+INFO: expressPbrSetup: RedirectTarget Name                       : T1
+INFO: expressPbrSetup: RedirectTarget ID                                 : 3c365212-4e75-4380-bc03-190dae3d9cd1
+INFO: expressPbrSetup: RedirectTarget vportList  : mvdcdev54-2-vm1 mvdcdev54-3-vm1
+INFO: expressPbrSetup: RedirectTarget VIP                                : 11.0.0.2
+*******************************************************************************************
+pbrExpArr(advfwdAcl,ID)        = 5776c0fa-0051-4766-8212-f358cc0dde8d
+pbrExpArr(domainName)          = Nuage Domain
+pbrExpArr(dstVm)               = mvdcdev54-1-vm2
+pbrExpArr(enterpriseName)      = EXPRESS-mvdcdev54
+pbrExpArr(mvdcdev54-2-vm1,MAC) = 00:00:00:00:00:11
+pbrExpArr(mvdcdev54-3-vm1,MAC) = 00:00:00:00:00:22
+pbrExpArr(pbrAppList)          = mvdcdev54-2-vm1 mvdcdev54-3-vm1
+pbrExpArr(pbrEgressAcl,ID)     = 8754e774-8b8f-4536-b0e7-6072cc82c48c
+pbrExpArr(pbrIngressAcl,ID)    = 6bb26974-416e-4319-9521-d162e40a85f3
+pbrExpArr(redirectTarget)      = T1
+pbrExpArr(redirectTarget,ID)   = 3c365212-4e75-4380-bc03-190dae3d9cd1
+pbrExpArr(resolvedPbrApp)      = 
+pbrExpArr(srcVm)               = mvdcdev54-3-vm7
+pbrExpArr(vip)                 = 11.0.0.2
+pbrExpArr(vip,gw)              = 11.0.0.1
+pbrExpArr(vip,netmask)         = 255.0.0.0
+pbrExpArr(vip,subnet)          = Network From Pool
+pbrExpArr(vip,subnetAddr)      = 11.0.0.0
+Done with Express PBR configs
+
+
+
+
+# Setup UNIT beds
+sed -i s/PERSONALITY=vrs/PERSONALITY=vrs-g/ /etc/default/openvswitch
+grep "PERSONALITY=vrs" /etc/default/openvswitch
+nuage-vlan-config mod eth0 access 1-300
+sed -i s/#\ ACTIVE_CONTROLLER=/ACTIVE_CONTROLLER=10.31.40.96/g /etc/default/openvswitch
+grep "ACTIVE_CONTROLLER=" /etc/default/openvswitch
+service openvswitch restart
+
+
+
+
+
+
+
+# BGP Config for dcBgp test suite:
+if { $ovs == "4" } {
+       set dut "B"
+       set port "1/1/7"
+   } elseif { $ovs == "1" } {
+       set dut "B"
+       set port "1/1/1"
+   } elseif { $ovs == "2" } {
+       set dut "C"
+       set port "1/1/4"
+   } elseif { $ovs == "3" } {
+       set dut "C"
+       set port "1/1/12"
+   }
+   
+*A:Dut-B>config>service>vprn# info
+
+----------------------------------------------
+
+           router-id 172.0.0.1
+32
+           autonomous-system 100
+
+           route-distinguisher 100:132
+
+           interface "test" create
+
+               address 172.0.0.132/16
+
+               mac 00:18:18:00:62:9a
+
+               sap 1/1/7:2 create
+
+               exit
+
+           exit
+
+           interface "lo1" create
+
+               address 1.1.1.1/32
+               loopback
+
+           exit
+
+           bgp
+
+               connect-retry 2
+
+               export "defaultExport"
+
+               local-as 100
+
+               router-id 172.0.0.132
+               group "access-100"
+
+                   neighbor 172.0.0.1
+
+                       family ipv4
+                       passive
+
+                       peer-as 100
+
+                   exit
+
+               exit
+               no shutdown
+           exit
+
+           no shutdown
+
+----------------------------------------------
+*A:Dut-B>config>router>policy-options# policy-statement defaultExport
+*A:Dut-B>config>router>policy-options>policy-statement$ default-action accept
+*A:Dut-B>config>router>policy-options>policy-statement>default-action$ back
+*A:Dut-B#
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ip netns add ns_ovs1-port3-vlan201_1
+ip link add link eth1 name eth1.201 type vlan id 201
+ip link set dev eth1.201 up
+ip link add link eth1.201 name mac1_eth1.201 address 00:25:9d:05:45:0d type macvlan mode bridge
+ip link set mac1_eth1.201 netns ns_ovs1-port3-vlan201_1
+ip netns exec ns_ovs1-port3-vlan201_1 ip link set mac1_eth1.201 up
+ip netns exec ns_ovs1-port3-vlan201_1 dhclient -r mac1_eth1.201
+ip netns exec ns_ovs1-port3-vlan201_1 dhclient -4 mac1_eth1.201
+ip netns exec ns_ovs1-port3-vlan201_1 ip addr show mac1_eth1.201

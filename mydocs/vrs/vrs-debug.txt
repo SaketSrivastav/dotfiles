@@ -1,0 +1,117 @@
+#######################################
+Nuage Repo
+#######################################
+echo -e "[nuage-centos-7.1-server-mirror]\nname=nuage-centos-7.1-mirror\nbaseurl=http://mirrors.mv.nuagenetworks.net/rhel-7.1/rhel-7-server-eus-rpms/\ngpgcheck=0\nenabled=1" > /etc/yum.repos.d/nuage-el7.1-mirror.repo
+
+
+#######################################
+Build  Commands
+#######################################
+git submodule foreach --recursive git reset --hard
+git submodule foreach --recursive git clean -fdx
+git submodule init
+git submodule sync
+git submodule update --init --recursive
+
+#######################################
+Ovs tools
+#######################################
+/usr/global/tools/ovs/nsg/valgrind/
+
+#######################################
+Valgrind run for bgpd:
+#######################################
+
+ip netns exec nuage-bgp valgrind -q --leak-check=full --read-var-info=yes --track-origins=yes --error-limit=no --time-stamp=yes --log-file=/var/log/openvswitch/bgpdvalgrind.log.%p /usr/bin/bgpd unix:/var/run/openvswitch/db.sock -vconsole:emer -vsyslog:err -vfile:warn --no-chdir --log-file=/var/log/openvswitch/bgpd.log --pidfile=/var/run/openvswitch/bgpd.pid --detach 
+
+#######################################
+ovs-vswitchd Commands:
+#######################################
+
+systemctl stop openvswitch ; systemctl stop nuage-bgp
+systemctl start openvswitch ; systemctl start nuage-bgp
+
+> /var/log/openvswitch/ovs-vswitchd.log
+ovs-appctl vlog/set vrs_ofproto_dpif:dbg
+ovs-appctl vlog/disable-rate-limit
+
+> /var/log/openvswitch/ovs-vswitchd.log ; ovs-appctl vlog/set info ; ovs-appctl vlog/disable-rate-limit ; ovs-appctl vlog/reopen
+
+ovs-appctl vlog/set warn
+
+> /var/log/openvswitch/ovs-vswitcd.log ; systemctl restart openvswitch ; systemctl restart nuage-bgp ; ovs-appctl vlog/set vrs_nuage_route:info ; ovs-appctl vlog/reopen ; tailf /var/log/openvswitch/ovs-vswitchd.log
+
+> /var/log/openvswitch/ovs-vswitchd.log ; tailf $!
+
+#######################################
+RPM Commands:
+#######################################
+
+rpm -e nuage-openvswitch-0.0.0-nsg.el7.x86_64 nuage-openvswitch-debuginfo-0.0.0-nsg.el7.x86_64 --nodeps
+rpm -ivh nuage-openvswitch-debuginfo-0.0.0-nsg.el7.x86_64.rpm nuage-openvswitch-0.0.0-nsg.el7.x86_64.rpm
+
+
+#######################################
+Debug Commands:
+#######################################
+
+perf record -F 99 -g -p PID sleep 10
+perf report -g --stdio
+
+
+reconnect
+setXmppGlobalVars
+SGV vspSetupType vrsgScale
+vspSetup
+source /home/nthangav/ws/gash/testsuites/dc_bgp/bgp_bfd.tcl
+dcBgpBfdTests
+#when the script pauses, run the below from gash
+while
+{ [file exists /tmp/loop] }
+{ log_msg INFO [Dut-B sendCliCommand "configure port 1/1/1 shutdown"] mplsSleep 2 log_msg INFO [Dut-B sendCliCommand "configure port 1/1/1 no shutdown"] mplsSleep 5 }
+
+#############################################
+GDB Debug
+#############################################
+set print pretty on
+handle SIGPIPE nostop noprint pass
+
+
+
+ovs-1
+On e2e: 
+ePt-e1-l3-d1-z1-n1-ovs-1-1
+ovs-appctl vm/send-event cd9bc2b1-e1fa-4bb7-8419-7f6606333ed3 destroy
+ovs-appctl vm/send-event cd9bc2b1-e1fa-4bb7-8419-7f6606333ed3 start
+
+On testbed:
+virsh define /home/mvdcdev36/l3vport-Dom1-Sub1-test-1-vm1.xml 
+virsh define /home/mvdcdev36/l3vport-Dom1-Sub1-1-vm3.xml 
+
+ovs-appctl vm/send-event 4c4e94af-5cb7-4b83-9578-ad278ffd84dc start
+ovs-appctl vm/send-event 6104102b-508b-4404-805f-eda7410ba755 start
+
+ovs-2
+virsh define /home/mvdcdev36/l3vport-Dom1-Sub1-test-1-vm1.xml 
+virsh define /home/mvdcdev36/l3vport-Dom1-Sub1-2-vm3.xml 
+ovs-appctl vm/send-event cee8278e-c29f-4302-946a-6e7978d7798c start
+ovs-appctl vm/send-event 555b413a-c2a9-4ac2-96cf-2ff68c7395ef start
+
+ovs-appctl vm/port-show
+ovs-appctl bridge/dump-flows alubr0 | grep 50.0.0.0
+ovs-dpctl dump-flows | grep 50.0.0.1
+
+l3vport-Dom1-Sub1-test-1-vm1.xml is the src vm
+l3vport-Dom1-Sub1-1-vm3 is the next-hop for the static-route 50.0.0.0/8
+
+
+docker run -itd -e NUAGE_ACTIVE_CONTROLLER="1.1.1.1" -e NUAGE_STANDBY_CONTROLLER="" --privileged --pid=host --net=host -v /var/run:/var/run -v /sys/module:/sys/module:ro -v /lib/modules:/lib/modules:ro nuage-vrs
+
+echo 0 > /var/log/openvswitch/ovs-vswitchd.log
+ovs-appctl vlog/disable-rate-limit; ovs-appctl vlog/set dbg ; ovs-appctl vlog/reopen ;
+
+echo 0 > /var/log/openvswitch/bgpd.log
+ovs-appctl -t bgpd vlog/disable-rate-limit; ovs-appctl -t bgpd vlog/set dbg ; ovs-appctl -t bgpd vlog/reopen ;
+
+
+ovs-appctl vlog/disable-rate-limit; ovs-appctl vlog/set dpif_netlink:file:dbg; ovs-appctl vlog/set ofproto_dpif:file:dbg;ovs-appctl vlog/set ofproto_dpif_upcall:file:dbg; ovs-appctl vlog/set vrs_ofproto_dpif:file:dbg;  ovs-appctl vlog/set vrs_ofproto_vrf:file:dbg; ovs-appctl vlog/set ofproto_dpif_xlate:file:dbg; ovs-appctl vlog/set flow:file:dbg; ovs-appctl vlog/set  dpif:file:dbg

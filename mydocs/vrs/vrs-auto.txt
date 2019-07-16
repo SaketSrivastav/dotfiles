@@ -1,0 +1,12 @@
+sudo yum install qemu libvirt libvirt-devel ruby-devel gcc qemu-kvm
+export VAGRANT_DISABLE_RESOLV_REPLACE=1
+vagrant plugin install vagrant-libvirt
+virsh pool-define-as --name vrsauto --type dir --target ~/vrsauto/images
+
+
+
+
+
+
+
+
