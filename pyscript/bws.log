@@ -1,0 +1,6 @@
+2019-07-16 06:00:01,828:INFO:Building workspace script started
+2019-07-16 06:00:01,828:INFO:Executing: find . -maxdepth 4 -type d -name ".git" -printf "%h" in /home/saketkus/ws
+2019-07-16 06:00:01,867:INFO:Workspace: /home/saketkus/ws/00-1/panos
+2019-07-16 06:00:08,674:INFO:Fetching all remotes done
+2019-07-16 06:00:08,705:INFO:/home/saketkus/ws/00-1/panos: Curr Branch: TiMOS-DC_0_0
+2019-07-16 06:00:08,705:INFO:/home/saketkus/ws/00-1/panos: Checking out TiMOS-DC_0_0_new

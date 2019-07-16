@@ -1,0 +1,518 @@
+# Github
+export GITHUB_URL='git@github.mv.usa.alcatel.com'
+
+#Utility Methods
+function execute_cmd () {
+    echo "INFO: $1"
+
+    # tput setaf 6
+
+    eval $1 2> /dev/null
+    # tput setaf sgr0
+}
+
+#My script aliases
+load_certs='vsc_certs SIM198 | at now + 2 min'
+function vsc_certs() {
+    if [[ -z $1 ]]
+    then    
+        echo "usage: vsc_certs <ip>"
+        return
+    fi
+    sshpass -p admin scp -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no \
+    /home/saketkus/Bugs/DC/certs/server.key admin@$1:server.key 2> /dev/null;
+    sshpass -p admin scp -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no \
+    /home/saketkus/Bugs/DC/certs/CAserver.crt admin@$1:CAserver.crt 2> /dev/null;
+    sshpass -p admin scp -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no \
+    /home/saketkus/Bugs/DC/certs/CA.crt admin@$1:CA.crt 2> /dev/null;
+    # sshpass -p admin scp -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no \
+    # /home/saketkus/Bugs/DC/certs/server.crt admin@$1:server.crt > /dev/null;
+}
+
+function imt() {
+    sshpass -p tigris scp bin/7xxx-i386/cpm.tim bin/7xxx-i386/boot.tim ftpuser@192.168.122.1:/home/ftpuser/images/
+}
+
+function vrs_certs() {
+    if [[ -z $1 ]]
+    then    
+        echo "usage: vrs_certs <ip>"
+        return
+    fi
+    sshpass -p admin scp -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no \
+    /home/saketkus/Bugs/DC/certs/client.key admin@$1:client.key > /dev/null;
+    sshpass -p admin scp -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no \
+    /home/saketkus/Bugs/DC/certs/CAclient.crt admin@$1:CAclient.crt > /dev/null;
+    sshpass -p admin scp -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no \
+    /home/saketkus/Bugs/DC/certs/CA.crt admin@$1:CA.crt > /dev/null;
+    # sshpass -p admin scp -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no /home/saketkus/Bugs/DC/certs/CA.crl admin@$1:CA.crl > /dev/null;
+}
+
+function rem_ssh() {
+    sed -i "/$1/d" ~/.ssh/known_hosts
+}
+
+function term() {
+    gnome-terminal -e 'telnet $1'
+    tail -f $PAN_DIR/log.txt
+}
+
+function reload_identity() {
+    eval "${ssh-agent -s}"
+    ssh-add ~/.ssh/id_rsa
+}
+
+# Remote Directory on mvpxe4
+alias remdir='v /mnt/saketkus/'
+
+#Tools Tip Twiki
+function mkall() {
+    mk --summary
+    if [[ $(tail --lines=3 log.txt | head --lines=1) == *FAIL* ]]; then
+        notify-send "Build failed" "buildall failed in:\n\t$PWD" -i process-stop -t 5000
+    else
+        notify-send "Build complete" "buildall completed in:\n\t$PWD" -i emblem-default -t 5000
+    fi
+}
+
+function bodyFunc() {
+    if [[ -z $1 || -z $2 ]]
+    then
+        echo "usage: bodyFunc <function-name> <filename>"
+    else
+        sed -n "/$1/,/^}/p" $2
+    fi
+}
+
+# Automatic Reboot SIM box
+function remote-me() {
+    local cmd=$1
+    if [ "$1" != "" ]; then
+        echo "Remotely executing \"$cmd\""
+            ssh -l root mvpxe4 "$cmd"
+    else
+        echo "Please pass a command"
+    fi
+}
+
+function execute-reboot-on-lan() {
+    local sim=$1
+    local action=$2
+    local mac=mac_$sim
+    if [ "${!mac}" != "" ]; then
+        remote-me "reboot-on-lan eth0 ${!mac} $action devsim0101"
+    else
+        echo "no such sim"
+    fi
+}
+
+function wake() {
+    execute-reboot-on-lan $1 0
+}
+
+function sleep-sim() {
+    execute-reboot-on-lan $1 5
+}
+
+function sleep-all-sims() {
+    sleep-sim sim198 
+}
+
+function rb() {
+    execute-reboot-on-lan $1 2
+} 
+
+function term(){
+    if [[ -z $1 ]]; then
+        echo "No command to execute"
+    else
+        gnome-terminal --command "$1" &
+    fi
+}
+
+#Emacs aliases
+# function emacs (){
+#     /usr/local/bin/emacs "$@" &
+# }
+
+function sanityovs () {
+    if [[ -z $2 || -z $3 ]]
+    then
+        echo 'usage: sanityovs <00> <pause reason> <testbed> $@'
+        echo 'regress -subTopology dctorOvs -runLevel regular -platform dctor -nobuild -reason \"`pwd`\" -runSuite Sanity -forcePause <reason> -cvs_tag TiMOS-DC_0_0 -bofa enableChecks -cnaSim false -customMibs true -testbed <name>'
+        return 1
+    fi
+    case $1 in
+        00) regress -subTopology dctorOvs -runLevel regular -platform dctor -nobuild -reason \"`pwd`\" -runSuite Sanity -forcePause $2 -cvs_tag TiMOS-DC_0_0 -bofa enableChecks -cnaSim false -customMibs `pwd`/agent/ti-mibs -testbed $3 ${@:3}
+        ;;
+        32) regress -subTopology dctorOvs -runLevel regular -platform dctor -nobuild -reason \"`pwd`\" -runSuite Sanity -forcePause $2 -cvs_tag TiMOS-DC_3_2_current -bofa enableChecks -cnaSim false -customMibs `pwd`/agent/ti-mibs -testbed $3 ${@:3}
+        ;;
+        *) regress -subTopology dctorOvs -runLevel regular -platform dctor -nobuild -reason \"`pwd`\" -runSuite Sanity -forcePause $2 -cvs_tag TiMOS-DC_0_0 -bofa enableChecks -cnaSim false -customMibs `pwd`/agent/ti-mibs -testbed $3 ${@:3}
+        ;;
+    esac
+}
+
+function sanitynsg () {    
+    if [[ -z $2 || -z $3 ]]
+    then
+        echo "usage: sanitynsg <00> <pause reason> <testbed> \$@"
+        echo 'regress -physTopology nsg -platform dctor -cvs_tag TiMOS-DC_0_0 -priority P3 -runLevel regular -forcePause <reason> -runSuite Sanity -nobuild -useimages dctor/0.0/current -testbed <name>'
+        return 1
+    fi
+    case $1 in
+        00) regress -physTopology nsg -platform dctor -cvs_tag TiMOS-DC_0_0 -priority P0 -runLevel regular -forcePause "$2" -sanityRun true -runSuite Sanity -nobuild -bofa enableChecks -cnaSim false -customMibs `pwd`/agent/ti-mibs -testbed $3 ${@:3}
+        ;;
+        32) regress -physTopology nsg -platform dctor -cvs_tag TiMOS-DC_3_2_current -priority P0 -runLevel regular -forcePause "$2" -sanityRun true -runSuite Sanity -nobuild -bofa enableChecks -cnaSim false -customMibs `pwd`/agent/ti-mibs -testbed $3 ${@:3}
+        ;;
+        *) regress -physTopology nsg -platform dctor -cvs_tag TiMOS-DC_0_0 -priority P0 -runLevel regular -forcePause "$2" -sanityRun true -runSuite Sanity -nobuild -bofa enableChecks -cnaSim false -customMibs `pwd`/agent/ti-mibs -testbed $3 ${@:3}
+        ;;
+    esac
+}
+
+function sanityunit () {    
+    if [[ -z $2 || -z $3 ]]
+    then
+        echo "usage: sanityunit <00> <pause reason> <testbed> \$@"
+        echo 'regress -platform dctor -subTopology stdUnit -cvs_tag TiMOS-DC_0_0 -priority P3 -runLevel regular -forcePause <reason> -runSuite Sanity -nobuild -testbed <name>'
+        return 1
+    fi
+    case $1 in
+        00) regress -platform dctor -subTopology stdUnit -cvs_tag TiMOS-DC_0_0 -priority P3 -runLevel regular -forcePause "$2" -runSuite Sanity -nobuild -testbed $3 ${@:3}
+        ;;
+        32) regress -platform dctor -subTopology stdUnit -cvs_tag TiMOS-DC_3_2_current -priority P3 -runLevel regular -sanityRun true -forcePause "$2" -runSuite Sanity -nobuild -testbed $3 ${@:3}
+        ;;
+        *) regress -platform dctor -subTopology stdUnit -cvs_tag TiMOS-DC_0_0 -priority P3 -runLevel regular -sanityRun true -forcePause "$2" -runSuite Sanity -nobuild -testbed $3 ${@:3}
+    esac
+}
+
+#Open jira bug
+function jira () {
+    xdg-open http://mvjira.mv.usa.alcatel.com:8080/browse/$1 &> /dev/null
+}
+
+function v () {
+    if [[ -z $1 ]]
+    then
+        echo "No file given"
+        return 1
+    fi
+    tmux neww "vim $1"
+}
+
+# Git automation
+
+function gitr () {
+    if [[ -z $1 ]]
+    then
+        echo 'usage: gitr <remote-csl>'
+        echo 'git remote add <csl> git@github.mv.usa.alcatel.com:<CSL>/TiMOS.git'
+    else
+        git remote add $1 git@github.mv.usa.alcatel.com:$1/TiMOS.git
+        git remote
+        git fetch $1
+        git branch -a | grep $1
+    fi
+}
+
+function repo-up () {
+    curr_pwd=`pwd`
+    cd $HOME/ws/repo/panos/
+    source $HOME/.zshrc.local > /dev/null
+    git checkout TiMOS-DC_0_0 2> /dev/null
+    git up > /dev/null
+    cd $curr_pwd
+}
+
+# $1 : branch name
+# $2 : ws_dir
+# $3 : panos_dir
+function clone_ws() {
+    cd $HOME/ws/repo/panos
+    git checkout $1
+    if [[ ! -d $2 ]]
+    then
+        mkdir -p $2
+    fi
+    git clone -b $1 $HOME/ws/repo/panos $2/$3
+    cd $2/$3
+    git remote set-url origin git@github.mv.usa.alcatel.com:SROS/TiMOS.git 
+    source $HOME/.zshrc.local
+    echo '-------------------------------------------'
+    echo '-       New Workspace Info                -'
+    echo '-------------------------------------------'
+    git branch -a
+    git remote -v
+}
+
+#Prepare a new workspace
+function feature_ws() {
+    FEATURE_WS_LOCATION=/home/saketkus/ws/feature
+    if [[ -z $1 ]]
+    then
+        echo 'usage: feature_ws <feature_name>'
+        return 1
+    fi
+    mkdir -p $FEATURE_WS_LOCATION/$1/panos/
+    cd $FEATURE_WS_LOCATION/$1/panos/
+    git init
+    git remote add origin git@github.mv.usa.alcatel.com:saketkus/TiMOS.git
+    git fetch origin
+#add_official
+    rcsource
+}
+
+# Prepares a workspace environment
+function setws1() {
+    if [[ -z $1 || -z $2 ]]
+    then
+        echo 'usage: setws <branch-version> <ws_dir>'
+        echo '       setws 00 mclag'
+    else
+        case $1 in
+            00) clone_ws TiMOS-DC_0_0 $HOME/ws/$2/00 'panos'
+            ;;
+            32) clone_ws TiMOS-DC_3_2_current $HOME/ws/$2/32 'panos'
+            ;;
+            40) clone_ws TiMOS-DC_4_0_current $HOME/ws/$2/40 'panos'
+            ;;
+        esac
+    fi
+}
+
+# Add official repo
+function add_official () {
+    git remote add official $GITHUB_URL:SROS/TiMOS.git
+    git fetch official
+}
+
+# Add user repo
+function add_user () {
+    git remote add $1 $GITHUB_URL:$1/TiMOS.git
+    git fetch $1
+}
+
+# Clones a remote user repo
+# $1 user_name
+function clone_user_repo () {
+    git clone $GITHUB_URL:$1/TiMOS.git panos
+    cd panos
+    git checkout -b TiMOS-DC_0_0
+}
+
+function init_prefs_mk () {
+    echo 'DIST=1' > prefs.mk
+}
+
+function post_ws_setup () {
+    add_official
+    init_prefs_mk
+}
+
+# Add a remote of user
+function add-remote () {
+    if [[ -z $1 ]]
+    then
+        echo 'usage: add-remote <remote-csl>'
+    else
+        if [[ ! -d $HOME/ws/remotes/$2 ]]
+        then
+            mkdir -p $2
+        fi
+        cd $HOME/ws/remotes/$2
+        clone_user_repo $2
+        cd panos
+        add_official
+        git remote -v
+    fi
+}
+
+# Function to delete git branch from local and remote
+function gbdel () {
+    local curr_branch=$(git_current_branch)
+    execute_cmd "git checkout TiMOS-DC_0_0"
+    execute_cmd "git branch -D $curr_branch && git branch -rD origin/$curr_branch"
+}
+
+#Git checkout new branch
+function f_gco() {
+    execute_cmd "git checkout $1"
+    execute_cmd "git fetch origin $1"
+    execute_cmd "git pull origin $1"
+    execute_cmd "git fetch official"
+    execute_cmd "git pull official $1"
+    execute_cmd "git push origin $1"
+    execute_cmd "git checkout -b $2"
+}
+
+
+#Funtion to checkout a new branch
+function gcob () {
+    if [[ -z $1 || -z $2 ]]
+    then
+        echo 'usage: gcob version <branch_name>'
+        return 1
+    fi
+    case $1 in
+        00) f_gco TiMOS-DC_0_0 $2
+        ;;
+        32) f_gco TiMOS-DC_3_2_current $2
+        ;;
+    esac
+}
+
+#List current images of VSP
+function curr () {
+    eval 'ls -l /usr/global/cumulo/images/0.0/current'
+    eval 'ls -l /usr/global/cumulo/images/vsd/0.0/current'
+    eval 'ls -l /usr/global/cumulo/images/vrs/0.0/current'
+}
+
+function cscr () {
+    rm -f cscope.* &> /dev/null
+    rm -f tags
+    cscope-indexer.sh &> /dev/null &
+    make tags &> /dev/null &
+}
+
+function setws ()
+{
+    if [[ -z $1 ]]
+    then
+        echo 'usage: setws <username>'
+        return 1
+    fi
+    clone_user_repo $1
+    cd panos
+    cp $HOME/work/prefs.mk .
+    rcsource
+    add_official
+    cscr
+}
+
+# Tmux functions
+function ttb ()
+{
+    SESSION=`basename $1`
+    tmux -2 new-session -d -s $SESSION
+    tmux rename-window -t $SESSION:1 gash
+    tmux split-window -h
+    tmux select-pane -t 0
+    tmux new-window -t $SESSION -a -n duts
+    tmux new-window -t $SESSION -a -n ovs
+    tmux select-window -t $SESSION:1
+    tmux -2 attach -t $SESSION
+}
+
+function gbupd () {
+    curr_branch=$(git_current_branch)
+    execute_cmd "git checkout TiMOS-DC_0_0"
+    execute_cmd "git pull origin TiMOS-DC_0_0"
+    execute_cmd "git fetch official"
+    execute_cmd "git pull official TiMOS-DC_0_0"
+    execute_cmd "git push origin TiMOS-DC_0_0"
+    execute_cmd "git checkout $curr_branch"
+    if [ $1 -eq "-r" ];
+    then
+        execute_cmd "git rebase --no-edit origin/TiMOS-DC_0_0"
+    else
+        execute_cmd "git merge --no-edit origin/TiMOS-DC_0_0"
+    fi
+}
+
+function scptim () {
+    if [[ $1 -eq '-e' ]] 
+    then
+        scp bin/7xxx-i386/cpm.tim $2@$2:images/i386-cpm.tim
+    elif [[ $1 -eq '-h' ]]
+    then
+        scp bin/7xxx-hops/cpm.tim $2@$2:images/dccc/i386-cpm.tim
+    else
+        scp bin/7xxx-i386/cpm.tim $2@$2:images/dccc/i386-cpm.tim
+    fi
+}
+
+function vimplugupd () {
+    curr_dir=`pwd`
+    cd ~/.vim/bundle
+    for i in `ls`; do
+        cd "$i"
+        execute_cmd "Updating ".$i
+        git pull > /dev/null
+        cd ..
+    done
+    cd $curr_dir
+}
+
+function vimplugsubmod () {
+    for d in `find vim/bundle/ -maxdepth 1 -mindepth 1 -type d`
+    do
+        pushd $d
+        export url=$(git config --get remote.origin.url)
+        popd
+        execute_cmd "git submodule add $url $d"
+    done
+}
+
+function vimplugadd () {
+    if [[ -z $1 || -z $2 ]]
+    then
+        echo 'usage: vimplugadd <repo-url> <dir-name>'
+        return 1
+    fi
+    pushd
+    cd $HOME/dotfiles
+    cmd="git submodule add $1 vim/bundle/$2"
+    execute_cmd $cmd
+    popd
+}
+
+function emacsrestart ()
+{
+    pkill emacs
+    # emacs --daemon --insecure --debug-init
+    emacsclient -c -a ""
+}
+
+#Nuage shortcuts
+function vsd ()
+{
+    xdg-open 'https://'$1':8443'
+}
+
+function em ()
+{
+    # Checks if there's a frame open
+    emacsclient -n -e "(if (> (length (frame-list)) 1) ‘t)" 2> /dev/null | grep t &> /dev/null
+    if [ "$?" -eq "1" ]; then
+        emacsclient -a ‘’ -nqc "$@" &> /dev/null
+    else
+        emacsclient -nq "$@" &> /dev/null
+    fi
+}
+
+# git log --date=iso --pretty=format:'%ad%x08%an: %s' | awk '$0 >= "2018-05-07" && $0 <= "2018-05-13"' | grep -i Saket
+function wsu ()
+{
+    if [[ -z $1 || -z $2 ]]
+    then
+        echo "Ex: git log --date=iso --pretty=format:\'%ad%x08%an: %s\' | awk \'$0 >= \"2018-05-07\" && $0 <= \"2018-05-13\"' | grep -i Saket"
+        return 1
+    fi
+    before=$1
+    after=$2
+
+    if [[ -z $3 ]]
+    then
+        git_user=`git config --get user.name`
+        echo "Using default author: $git_user"
+    else
+        git_user=$3
+    fi
+
+    format_str='--pretty=format'"'"':%ad%x08%an: %s'"'"''
+    awk_str='/usr/bin/awk '"'"'$0 >= "'$before''" && \$0 <= "$after'"'"'"''
+    git_str='git log --date=iso'
+    user_grep_str="/usr/bin/grep -i $git_user"
+    echo "Executing: $git_str $format_str | $awk_str | $user_grep_str"
+    /bin/bash -c "$git_str $format_str | $awk_str | $user_grep_str"
+}

@@ -1,0 +1,18 @@
+Traceback (most recent call last):
+  File "/home/saketkus/dotfiles/pyscript/bws.py", line 146, in <module>
+    main()
+  File "/home/saketkus/dotfiles/pyscript/bws.py", line 141, in main
+    upd_ws()
+  File "/home/saketkus/dotfiles/pyscript/bws.py", line 134, in upd_ws
+    panos_repo_upd(str(panos_dir))
+  File "/home/saketkus/dotfiles/pyscript/bws.py", line 71, in panos_repo_upd
+    g.checkout(PANOS_00)
+  File "/usr/lib64/python2.7/site-packages/git/cmd.py", line 424, in <lambda>
+    return lambda *args, **kwargs: self._call_process(name, *args, **kwargs)
+  File "/usr/lib64/python2.7/site-packages/git/cmd.py", line 873, in _call_process
+    return self.execute(call, **_kwargs)
+  File "/usr/lib64/python2.7/site-packages/git/cmd.py", line 687, in execute
+    raise GitCommandError(command, status, stderr_value, stdout_value)
+git.exc.GitCommandError: Cmd('git') failed due to: exit code(1)
+  cmdline: git checkout TiMOS-DC_0_0_new
+  stderr: 'error: pathspec 'TiMOS-DC_0_0_new' did not match any file(s) known to git.'
