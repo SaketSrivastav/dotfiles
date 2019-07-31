@@ -1,5 +1,5 @@
 # Path to your oh-my-zsh installation.
-export ZSH=/home/saketkus/.oh-my-zsh
+export ZSH=$HOME/.oh-my-zsh
 
 # Set name of the theme to load.
 # Look in ~/.oh-my-zsh/themes/
@@ -55,14 +55,14 @@ plugins=(git)
 
 # User configuration
 
-export PATH="/usr/local/timostools/netsnmp5:/usr/local/timostools:/usr/local/bin:/usr/bin:/bin:/usr/X11R6/bin:.:/sbin/:/usr/sbin/:/home/saketkus/myscripts/:/home/saketkus/myscripts/pyscript/:/usr/global/bin/:/home/saketkus/bin"
-# export MANPATH="/usr/local/man:$MANPATH"
-if [[ -d "/usr/local/go" ]]; then
-    export GOROOT=/usr/local/go
-    export GOBIN=/home/saketkus/gocode/bin
-    export GOPATH=/home/saketkus/gocode
-    export PATH=$PATH:$GOROOT/bin:$GOPATH/bin
-fi
+#export PATH="/usr/local/timostools/netsnmp5:/usr/local/timostools:/usr/local/bin:/usr/bin:/bin:/usr/X11R6/bin:.:/sbin/:/usr/sbin/:/home/saketkus/myscripts/:/home/saketkus/myscripts/pyscript/:/usr/global/bin/:/home/saketkus/bin"
+## export MANPATH="/usr/local/man:$MANPATH"
+#if [[ -d "/usr/local/go" ]]; then
+#    export GOROOT=/usr/local/go
+#    export GOBIN=/home/saketkus/gocode/bin
+#    export GOPATH=/home/saketkus/gocode
+#    export PATH=$PATH:$GOROOT/bin:$GOPATH/bin
+#fi
 
 source $ZSH/oh-my-zsh.sh
 
@@ -94,3 +94,8 @@ if [ -f ~/dotfiles/localrc ]; then
     source ~/dotfiles/localrc
     source ~/dotfiles/rcfunctions
 fi
+
+#Aruba Settings
+export DEFAULT_PLATFORM=genericx86-p4
+export HALON=/ws/srivasak/halon
+source $HALON/tools/srcMe

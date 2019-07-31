@@ -31,6 +31,7 @@ values."
    ;; List of configuration layers to load.
    dotspacemacs-configuration-layers
    '(
+     markdown
      html
      (python :variables
              python-fill-column 80
@@ -84,7 +85,7 @@ values."
    '(
      powerline
      xah-find
-     (spaceline :location "~/ws/spaceline")
+     ;;(spaceline :location "~/ws/spaceline")
      yasnippet-snippets
     )
    ;; A list of packages that cannot be updated.
@@ -457,11 +458,11 @@ you should place your code here."
   ;; Setting to replace word with previous yank when new word highlighted
 
   ;; Spaceline config
-  (spaceline-toggle-buffer-size-off)
-  (spaceline-toggle-major-mode-off)
-  (spaceline-toggle-hud-off)
-  (spaceline-toggle-projectile-root-on)
-  (spaceline-toggle-window-number-off)
+;;  (spaceline-toggle-buffer-size-off)
+;;  (spaceline-toggle-major-mode-off)
+;;  (spaceline-toggle-hud-off)
+;;  (spaceline-toggle-projectile-root-on)
+;;  (spaceline-toggle-window-number-off)
   (setq powerline-default-separator 'wave)
   (setq spaceline-highlight-face-func 'spaceline-highlight-face-evil-state)
   ;; display time in powerline
@@ -471,8 +472,6 @@ you should place your code here."
   (define-key evil-normal-state-map (kbd "H") 'beginning-of-line)
   (define-key evil-normal-state-map (kbd "L") 'end-of-line)
   (define-key evil-normal-state-map (kbd "S") 'spacemacs/split-and-new-line)
-
-  (spacemacs/set-leader-keys (kbd "wco") 'delete-other-windows)
 
   ;; User Mappings
   (spacemacs/declare-prefix "o" "custom")
@@ -488,7 +487,7 @@ you should place your code here."
   (spacemacs/set-leader-keys (kbd "ogd") 'magit-diff)
   (spacemacs/set-leader-keys (kbd "ogp") 'gen_git_pr_url)
   (spacemacs/set-leader-keys (kbd "mm") 'man)
-  (spacemacs/set-leader-keys (kbd "gb") 'spacemacs//git-blame-magit-blame-addition-b)
+  ;; (spacemacs/set-leader-keys (kbd "gb") 'spacemacs//git-blame-magit-blame-addition-b)
 
   ;; Cscope bindings
   ;; (setq cscope-do-not-update-database t)
