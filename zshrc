@@ -95,7 +95,6 @@ if [ -f ~/dotfiles/localrc ]; then
     source ~/dotfiles/rcfunctions
 fi
 
-#Aruba Settings
-export DEFAULT_PLATFORM=genericx86-p4
-export HALON=/ws/srivasak/halon
-source $HALON/tools/srcMe
+if [ -f ~/dotfiles/arubarc ]; then
+    source ~/dotfiles/arubarc
+fi

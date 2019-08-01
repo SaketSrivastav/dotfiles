@@ -1,0 +1,17 @@
+# aliases
+
+# halonVM ssh shortcut
+HALON_VM="hpnsw5278.rose.rdlabs.hpecorp.net"
+HALON_USER="srivasak"
+
+localFolder="halon_vm"
+localDir="$HOME/$localFolder"
+remoteDir="/ws/$HALON_USER/"
+alias gotovm="ssh -Y $HALON_USER@$HALON_VM"
+alias mnth="sudo /usr/local/bin/sshfs -o allow_other,defer_permissions,IdentityFile=~/.ssh/id_rsa $HALON_USER@$HALON_VM:$remoteDir $localDir"
+# command below requires ssh login configured to login automatically
+# links:
+# https://jonathansblog.co.uk/sshfs-mount-remote-drive-in-finder
+# https://jonathansblog.co.uk/ssh-with-keys-for-authentication
+#alias mnt="umount -f $localDir; pkill -kill -f \"sshfs\"; /usr/local/bin/sshfs -o reconnect -o volname=$localFolder -o $HALON_USER@$HALON_VM:$remoteDir $localDir"
+alias unmnt="sudo umount -f $localDir; pkill -kill -f \"sshfs\""
