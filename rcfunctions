@@ -516,3 +516,14 @@ function wsu ()
     echo "Executing: $git_str $format_str | $awk_str | $user_grep_str"
     /bin/bash -c "$git_str $format_str | $awk_str | $user_grep_str"
 }
+
+##############################################################
+#            OpenGrok Url
+##############################################################
+function ogd () {
+    open "https://hpnsvr15.rose.rdlabs.hpecorp.net/source/search?q=&defs=$1&refs=&path=&hist=&project=Halon"
+}
+
+function ogfs () {
+    open "https://hpnsvr15.rose.rdlabs.hpecorp.net/source/search?q=$1&defs=&refs=&path=&hist=&project=Halon"
+}

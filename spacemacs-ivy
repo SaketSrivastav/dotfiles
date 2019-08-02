@@ -30,7 +30,9 @@ values."
    dotspacemacs-configuration-layer-path '()
    ;; List of configuration layers to load.
    dotspacemacs-configuration-layers
-   '(
+   '(markdown
+     (go :variables go-use-gometalinter t)
+     osx
      html
      (python :variables
              python-fill-column 80
@@ -77,7 +79,7 @@ values."
    '(
      powerline
      xah-find
-     (spaceline :location "~/ws/spaceline")
+     (spaceline :location "~/github/spaceline")
      yasnippet-snippets
     )
    ;; A list of packages that cannot be updated.
@@ -334,8 +336,6 @@ before packages are loaded. If you are unsure, you should try in setting them in
   (setq exec-path-from-shell-check-startup-files nil)
   (setq exec-path-from-shell-arguments '("-c"))
 
-  ;;Magit
-  magit-repository-directories '("~/ws/")
   )
 
 (defun dotspacemacs/user-config ()
@@ -364,8 +364,8 @@ you should place your code here."
                ("C" . c++-mode)
                ("h" . c++-mode)
                ("py" . python-mode)
-               ("nh" . python-mode)
-               ("in" . python-mode)))
+               ("go" . go-mode)
+               ))
     (push (cons (concat "\\." (car e) "\\'") (cdr e)) auto-mode-alist))
 
   (with-eval-after-load 'projectile
@@ -513,6 +513,13 @@ you should place your code here."
   (spacemacs/set-leader-keys (kbd "yn") 'yas-new-snippet)
   ;; (spacemacs/set-leader-keys (kbd "ya") 'helm-yas-create-snippet-on-region)
 
+  ;; Halon Mappings
+  (setq projectile-enable-caching nil)
+  (setq projectile-file-exists-remote-cache-expire nil)
+  (spacemacs/declare-prefix "oh" "halon")
+  (spacemacs/declare-prefix "ohs" "search")
+  (spacemacs/set-leader-keys (kbd "ohss") 'halon-ag-src)
+  (spacemacs/set-leader-keys (kbd "ohst") 'halon-ag-test)
   )
 
 ;; Magit update all remotes
@@ -610,6 +617,16 @@ you should place your code here."
   (interactive)
   (counsel-ag nil default-directory))
 
+(defun halon-ag-src()
+  (interactive)
+  (counsel-ag nil "~/halon_vm/halon/halon-src" "--go --python")
+  )
+
+(defun halon-ag-test()
+  (interactive)
+  (counsel-ag nil "~/halon_vm/halon/halon-test" "--go --python")
+  )
+
 ;; Do not write anything past this comment. This is where Emacs will
 ;; auto-generate custom variable definitions.
 (custom-set-variables
@@ -693,7 +710,7 @@ This function is called at the very end of Spacemacs initialization."
      (c++-mode . "bsd")
      (java-mode . "java")
      (awk-mode . "awk")
-     (other . "gnu"))))
+     (other . "gnu"))) t)
  '(counsel-projectile-ag-initial-input nil)
  '(evil-want-Y-yank-to-eol t)
  '(exec-path-from-shell-check-startup-files nil t)
@@ -706,7 +723,7 @@ This function is called at the very end of Spacemacs initialization."
     ("#CC9393" "#DFAF8F" "#F0DFAF" "#7F9F7F" "#BFEBBF" "#93E0E3" "#94BFF3" "#DC8CC3")))
  '(package-selected-packages
    (quote
-    (pfuture blacken org-plus-contrib org-bullets helm-make counsel-gtags color-moccur transient lv ivy-rich wgrep ivy-hydra counsel-projectile counsel swiper ivy web-mode tagedit slim-mode scss-mode sass-mode pug-mode less-css-mode haml-mode emmet-mode company-web web-completion-data treepy graphql yasnippet-classic-snippets pythonic yasnippet-snippets nameframe-projectile white-sand-theme rebecca-theme exotica-theme ghub let-alist hackernews winum madhat2r-theme fuzzy autothemer sanityinc-tomorrow-night-theme-theme yaml-mode csv-mode ranger visual-fill-column yapfify pyvenv pytest pyenv-mode py-isort pip-requirements live-py-mode hy-mode cython-mode company-anaconda anaconda-mode phpunit phpcbf php-extras php-auto-yasnippets drupal-mode php-mode web-beautify livid-mode skewer-mode simple-httpd json-mode json-snatcher json-reformat js2-refactor multiple-cursors js2-mode js-doc company-tern dash-functional tern coffee-mode solarized-theme xterm-color shell-pop multi-term eshell-z eshell-prompt-extras esh-help powerline spinner hydra parent-mode projectile pkg-info epl flx smartparens iedit anzu evil goto-chg undo-tree highlight f s diminish bind-map bind-key packed dash avy async popup company-go go-guru go-eldoc go-mode xah-find vimrc-mode dactyl-mode zonokai-theme zenburn-theme zen-and-art-theme underwater-theme ujelly-theme twilight-theme twilight-bright-theme twilight-anti-bright-theme tronesque-theme toxi-theme tao-theme tangotango-theme tango-plus-theme tango-2-theme sunny-day-theme sublime-themes subatomic256-theme subatomic-theme spacegray-theme soothe-theme soft-stone-theme soft-morning-theme soft-charcoal-theme smyx-theme seti-theme reverse-theme railscasts-theme purple-haze-theme professional-theme planet-theme phoenix-dark-pink-theme phoenix-dark-mono-theme pastels-on-dark-theme organic-green-theme omtose-phellack-theme oldlace-theme occidental-theme obsidian-theme noctilux-theme niflheim-theme naquadah-theme mustang-theme monokai-theme monochrome-theme molokai-theme moe-theme minimal-theme material-theme majapahit-theme lush-theme light-soap-theme jbeans-theme jazz-theme ir-black-theme inkpot-theme heroku-theme hemisu-theme hc-zenburn-theme gruvbox-theme gruber-darker-theme grandshell-theme gotham-theme gandalf-theme flatui-theme flatland-theme firebelly-theme farmhouse-theme espresso-theme dracula-theme django-theme darktooth-theme darkokai-theme darkmine-theme darkburn-theme dakrone-theme cyberpunk-theme color-theme-sanityinc-tomorrow color-theme-sanityinc-solarized clues-theme cherry-blossom-theme busybee-theme bubbleberry-theme birds-of-paradise-plus-theme badwolf-theme apropospriate-theme anti-zenburn-theme ample-zen-theme ample-theme alect-themes afternoon-theme xcscope smex alert log4e gntp mmm-mode markdown-toc markdown-mode htmlize gnuplot git-gutter-fringe+ git-gutter-fringe fringe-helper git-gutter+ git-gutter gh-md flycheck-pos-tip flycheck diff-hl smeargle orgit magit-gitflow magit-gh-pulls gitignore-mode github-search github-clone github-browse-file gitconfig-mode gitattributes-mode git-timemachine git-messenger git-link gist gh marshal logito pcache ht evil-magit magit magit-popup git-commit with-editor disaster company-c-headers cmake-mode clang-format helm-c-yasnippet company-statistics company-quickhelp pos-tip company auto-yasnippet yasnippet ac-ispell auto-complete ws-butler window-numbering which-key volatile-highlights vi-tilde-fringe uuidgen use-package toc-org spacemacs-theme spaceline restart-emacs request rainbow-delimiters quelpa popwin persp-mode pcre2el paradox open-junk-file neotree move-text macrostep lorem-ipsum linum-relative link-hint info+ indent-guide ido-vertical-mode hungry-delete hl-todo highlight-parentheses highlight-numbers highlight-indentation hide-comnt help-fns+ google-translate golden-ratio flx-ido fill-column-indicator fancy-battery eyebrowse expand-region exec-path-from-shell evil-visualstar evil-visual-mark-mode evil-unimpaired evil-tutor evil-surround evil-search-highlight-persist evil-numbers evil-nerd-commenter evil-mc evil-matchit evil-lisp-state evil-indent-plus evil-iedit-state evil-exchange evil-escape evil-ediff evil-args evil-anzu eval-sexp-fu elisp-slime-nav dumb-jump define-word column-enforce-mode clean-aindent-mode auto-highlight-symbol auto-compile aggressive-indent adaptive-wrap ace-window ace-link ace-jump-helm-line)))
+    (vmd-mode emoji-cheat-sheet-plus helm helm-core company-emoji org-plus-contrib org-bullets helm-make counsel-gtags color-moccur transient lv ivy-rich wgrep ivy-hydra counsel-projectile counsel swiper ivy web-mode tagedit slim-mode scss-mode sass-mode pug-mode less-css-mode haml-mode emmet-mode company-web web-completion-data treepy graphql yasnippet-classic-snippets pythonic yasnippet-snippets nameframe-projectile white-sand-theme rebecca-theme exotica-theme ghub let-alist hackernews winum madhat2r-theme fuzzy autothemer sanityinc-tomorrow-night-theme-theme yaml-mode csv-mode ranger visual-fill-column yapfify pyvenv pytest pyenv-mode py-isort pip-requirements live-py-mode hy-mode cython-mode company-anaconda anaconda-mode phpunit phpcbf php-extras php-auto-yasnippets drupal-mode php-mode web-beautify livid-mode skewer-mode simple-httpd json-mode json-snatcher json-reformat js2-refactor multiple-cursors js2-mode js-doc company-tern dash-functional tern coffee-mode solarized-theme xterm-color shell-pop multi-term eshell-z eshell-prompt-extras esh-help powerline spinner hydra parent-mode projectile pkg-info epl flx smartparens iedit anzu evil goto-chg undo-tree highlight f s diminish bind-map bind-key packed dash avy async popup company-go go-guru go-eldoc go-mode xah-find vimrc-mode dactyl-mode zonokai-theme zenburn-theme zen-and-art-theme underwater-theme ujelly-theme twilight-theme twilight-bright-theme twilight-anti-bright-theme tronesque-theme toxi-theme tao-theme tangotango-theme tango-plus-theme tango-2-theme sunny-day-theme sublime-themes subatomic256-theme subatomic-theme spacegray-theme soothe-theme soft-stone-theme soft-morning-theme soft-charcoal-theme smyx-theme seti-theme reverse-theme railscasts-theme purple-haze-theme professional-theme planet-theme phoenix-dark-pink-theme phoenix-dark-mono-theme pastels-on-dark-theme organic-green-theme omtose-phellack-theme oldlace-theme occidental-theme obsidian-theme noctilux-theme niflheim-theme naquadah-theme mustang-theme monokai-theme monochrome-theme molokai-theme moe-theme minimal-theme material-theme majapahit-theme lush-theme light-soap-theme jbeans-theme jazz-theme ir-black-theme inkpot-theme heroku-theme hemisu-theme hc-zenburn-theme gruvbox-theme gruber-darker-theme grandshell-theme gotham-theme gandalf-theme flatui-theme flatland-theme firebelly-theme farmhouse-theme espresso-theme dracula-theme django-theme darktooth-theme darkokai-theme darkmine-theme darkburn-theme dakrone-theme cyberpunk-theme color-theme-sanityinc-tomorrow color-theme-sanityinc-solarized clues-theme cherry-blossom-theme busybee-theme bubbleberry-theme birds-of-paradise-plus-theme badwolf-theme apropospriate-theme anti-zenburn-theme ample-zen-theme ample-theme alect-themes afternoon-theme xcscope smex alert log4e gntp mmm-mode markdown-toc markdown-mode htmlize gnuplot git-gutter-fringe+ git-gutter-fringe fringe-helper git-gutter+ git-gutter gh-md flycheck-pos-tip flycheck diff-hl smeargle orgit magit-gitflow magit-gh-pulls gitignore-mode github-search github-clone github-browse-file gitconfig-mode gitattributes-mode git-timemachine git-messenger git-link gist gh marshal logito pcache ht evil-magit magit magit-popup git-commit with-editor disaster company-c-headers cmake-mode clang-format helm-c-yasnippet company-statistics company-quickhelp pos-tip company auto-yasnippet yasnippet ac-ispell auto-complete ws-butler window-numbering which-key volatile-highlights vi-tilde-fringe uuidgen use-package toc-org spacemacs-theme spaceline restart-emacs request rainbow-delimiters quelpa popwin persp-mode pcre2el paradox open-junk-file neotree move-text macrostep lorem-ipsum linum-relative link-hint info+ indent-guide ido-vertical-mode hungry-delete hl-todo highlight-parentheses highlight-numbers highlight-indentation hide-comnt help-fns+ google-translate golden-ratio flx-ido fill-column-indicator fancy-battery eyebrowse expand-region exec-path-from-shell evil-visualstar evil-visual-mark-mode evil-unimpaired evil-tutor evil-surround evil-search-highlight-persist evil-numbers evil-nerd-commenter evil-mc evil-matchit evil-lisp-state evil-indent-plus evil-iedit-state evil-exchange evil-escape evil-ediff evil-args evil-anzu eval-sexp-fu elisp-slime-nav dumb-jump define-word column-enforce-mode clean-aindent-mode auto-highlight-symbol auto-compile aggressive-indent adaptive-wrap ace-window ace-link ace-jump-helm-line)))
  '(paradox-github-token t)
  '(pdf-view-midnight-colors (quote ("#DCDCCC" . "#383838")))
  '(projectile-enable-caching t)
