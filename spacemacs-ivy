@@ -30,10 +30,18 @@ values."
    dotspacemacs-configuration-layer-path '()
    ;; List of configuration layers to load.
    dotspacemacs-configuration-layers
-   '(markdown
-     (go :variables go-use-gometalinter t)
+   '(
+     markdown
+     (go
+      :variables
+      go-use-gometalinter t
+      go-format-before-save t
+      gofmt-command "goimports"
+      ;; go-use-test-args "-race -timeout 10s"
+      ;; godoc-at-point-function 'godoc-gogetdoc
+      )
      osx
-     html
+     ;; html
      (python :variables
              python-fill-column 80
              python-indent-offset 4
@@ -54,8 +62,8 @@ values."
       :disabled-for erc)
      ;; better-defaults
      emacs-lisp
-     (c-c++ :variables c-c++-enable-clang-support nil)
-     cscope
+     ;; (c-c++ :variables c-c++-enable-clang-support nil)
+     ;; cscope
      ;; (helm :enabled-for helm-cscope)
      git
      ;; org
@@ -67,7 +75,7 @@ values."
      ;;        shell-default-position 'bottom)
      ;; spell-checking
      ;; syntax-checking
-     (syntax-checking :variables syntax-checking-enable-by-default nil)
+     ;; (syntax-checking :variables syntax-checking-enable-by-default nil)
      ;; (version-control :variables
      ;;                  version-control-global-margin nil)
      )
@@ -79,8 +87,9 @@ values."
    '(
      powerline
      xah-find
-     (spaceline :location "~/github/spaceline")
+     (spaceline :location "~/Downloads/tools/spaceline")
      yasnippet-snippets
+     go-projectile
     )
    ;; A list of packages that cannot be updated.
    dotspacemacs-frozen-packages '()
@@ -357,13 +366,13 @@ you should place your code here."
 
   ;; Filenames
   (dolist (e '(("xml" . xml-mode)
-               ("ccp" . xml-mode)
                ("json" . json-mode)
                ("schema" . json-mode)
-               ("xinp" . web-mode)
                ("C" . c++-mode)
                ("h" . c++-mode)
                ("py" . python-mode)
+               ("bb" . sh-mode)
+               ("bbclass" . sh-mode)
                ("go" . go-mode)
                ))
     (push (cons (concat "\\." (car e) "\\'") (cdr e)) auto-mode-alist))
@@ -458,12 +467,16 @@ you should place your code here."
   ;; display time in powerline
   (display-time)
 
+  "Go-projectile hooks"
+  (require 'go-projectile)
+  (require 'go-guru)
+  (add-hook 'go-mode-hook 'go-projectile-mode)
+  (add-hook 'go-mode-hook 'go-guru-hl-identifier-mode)
+
   ;; My mappings
   (define-key evil-normal-state-map (kbd "H") 'beginning-of-line)
   (define-key evil-normal-state-map (kbd "L") 'end-of-line)
   (define-key evil-normal-state-map (kbd "S") 'spacemacs/split-and-new-line)
-
-  (spacemacs/set-leader-keys (kbd "wco") 'delete-other-windows)
 
   ;; User Mappings
   (spacemacs/declare-prefix "o" "custom")
@@ -479,7 +492,7 @@ you should place your code here."
   (spacemacs/set-leader-keys (kbd "ogd") 'magit-diff)
   (spacemacs/set-leader-keys (kbd "ogp") 'gen_git_pr_url)
   (spacemacs/set-leader-keys (kbd "mm") 'man)
-  (spacemacs/set-leader-keys (kbd "gb") 'spacemacs//git-blame-magit-blame-addition-b)
+  (spacemacs/set-leader-keys (kbd "gb") 'magit-blame)
 
   ;; Cscope bindings
   (setq cscope-do-not-update-database t)
@@ -496,10 +509,6 @@ you should place your code here."
   ;; (spacemacs/set-leader-keys (kbd "/") 'helm-projectile-ag)
   ;; (spacemacs/set-leader-keys (kbd "*") 'helm-grep-do-git-grep)
 
-  ;; Search optiosn for ivy
-  (spacemacs/set-leader-keys (kbd "/") 'spacemacs/counsel-git-grep-region-or-symbol)
-  ;; (spacemacs/set-leader-keys (kbd "*") 'spacemacs/counsel-git-grep-region-or-symbol)
-  (spacemacs/set-leader-keys (kbd "*") 'my-counsel-ag)
 
   (define-key evil-normal-state-map (kbd "C-+") 'evil-numbers/inc-at-pt)
   (define-key evil-normal-state-map (kbd "C--") 'evil-numbers/dec-at-pt)
@@ -520,7 +529,13 @@ you should place your code here."
   (spacemacs/declare-prefix "ohs" "search")
   (spacemacs/set-leader-keys (kbd "ohss") 'halon-ag-src)
   (spacemacs/set-leader-keys (kbd "ohst") 'halon-ag-test)
-  )
+  ;; Search optiosn for ivy
+  (spacemacs/set-leader-keys (kbd "/") 'halon-ag-src)
+  ;; (spacemacs/set-leader-keys (kbd "*") 'spacemacs/counsel-git-grep-region-or-symbol)
+  (spacemacs/set-leader-keys (kbd "*") 'halon-ag-test)
+
+)
+
 
 ;; Magit update all remotes
 (defun upd-all-git-remotes ()
@@ -613,19 +628,61 @@ you should place your code here."
     )
   )
 
-(defun my-counsel-ag ()
+(defun curr-dir-counsel-ag ()
   (interactive)
   (counsel-ag nil default-directory))
 
 (defun halon-ag-src()
   (interactive)
-  (counsel-ag nil "~/halon_vm/halon/halon-src" "--go --python")
+  (counsel-ag nil
+              (concat (projectile-project-root) "halon-src")
+              "--go --python"
+              )
   )
 
 (defun halon-ag-test()
   (interactive)
-  (counsel-ag nil "~/halon_vm/halon/halon-test" "--go --python")
+  (counsel-ag nil
+              (concat (projectile-project-root) "halon-test")
+              "--go --python"
+              )
   )
+
+(defun halon-go-mode()
+  (setq go-projectile-project-gopath (concat (projectile-project-root) "halon-src/hpe-brackets" ":"
+                                                     (projectile-project-root) "halon-src/hpe-config" ":"
+                                                     (projectile-project-root) "halon-src/hpe-config-boot" ":"
+                                                     (projectile-project-root) "halon-src/hpe-goidl" ":"
+                                                     (projectile-project-root) "halon-src/hpe-goutils" ":"
+                                                     (projectile-project-root) "halon-src/hpe-policyd" ":"
+                                                     (projectile-project-root) "halon-src/hpe-simplivityd" ":"
+                                                     (projectile-project-root) "halon-src/hpe-tsdbd" ":"
+                                                     (projectile-project-root) "halon-src/vsf-goutils" ":"
+                                                     (projectile-project-root) "halon-src/vsx-syncd")
+  )
+  (setq go-guru-set-scope (concat (projectile-project-root) "halon-src/hpe-brackets/..." ","
+                                          (projectile-project-root) "halon-src/hpe-config/..." ","
+                                          (projectile-project-root) "halon-src/hpe-config-boot/..." ","
+                                          (projectile-project-root) "halon-src/hpe-goidl/..." ","
+                                          (projectile-project-root) "halon-src/hpe-goutils/..." ","
+                                          (projectile-project-root) "halon-src/hpe-policyd/..." ","
+                                          (projectile-project-root) "halon-src/hpe-simplivityd/..." ","
+                                          (projectile-project-root) "halon-src/hpe-tsdbd/..." ","
+                                          (projectile-project-root) "halon-src/vsf-goutils/..." ","
+                                          (projectile-project-root) "halon-src/vsx-syncd/...")
+                )
+
+  (go-guru-hl-identifier-mode)
+
+  ;; Key bindings specific to go-mode
+  (local-set-key (kbd "M-.") 'godef-jump)         ; Go to definition
+  (local-set-key (kbd "M-*") 'pop-tag-mark)       ; Return from whence you came
+  (local-set-key (kbd "M-p") 'compile)            ; Invoke compiler
+  (local-set-key (kbd "M-P") 'recompile)          ; Redo most recent compile cmd
+  (local-set-key (kbd "M-]") 'next-error)         ; Go to next error (or msg)
+  (local-set-key (kbd "M-[") 'previous-error)     ; Go to previous error or msg
+  (auto-complete-mode 1)
+)
 
 ;; Do not write anything past this comment. This is where Emacs will
 ;; auto-generate custom variable definitions.
@@ -646,7 +703,7 @@ you should place your code here."
  '(counsel-projectile-ag-initial-input nil)
  '(evil-want-Y-yank-to-eol t)
  '(exec-path-from-shell-check-startup-files nil)
- '(fci-rule-color "#37474f" t)
+ '(fci-rule-color "#37474f")
  '(hl-sexp-background-color "#1c1f26")
  '(magit-fetch-arguments (quote ("--prune")))
  '(magit-log-arguments (quote ("--graph" "--color" "--decorate" "-n256")))
@@ -655,7 +712,7 @@ you should place your code here."
     ("#CC9393" "#DFAF8F" "#F0DFAF" "#7F9F7F" "#BFEBBF" "#93E0E3" "#94BFF3" "#DC8CC3")))
  '(package-selected-packages
    (quote
-    (org-plus-contrib org-bullets helm-make counsel-gtags color-moccur transient lv ivy-rich wgrep ivy-hydra counsel-projectile counsel swiper ivy web-mode tagedit slim-mode scss-mode sass-mode pug-mode less-css-mode haml-mode emmet-mode company-web web-completion-data treepy graphql yasnippet-classic-snippets pythonic yasnippet-snippets nameframe-projectile white-sand-theme rebecca-theme exotica-theme ghub let-alist hackernews winum madhat2r-theme fuzzy autothemer sanityinc-tomorrow-night-theme-theme yaml-mode csv-mode ranger visual-fill-column yapfify pyvenv pytest pyenv-mode py-isort pip-requirements live-py-mode hy-mode cython-mode company-anaconda anaconda-mode phpunit phpcbf php-extras php-auto-yasnippets drupal-mode php-mode web-beautify livid-mode skewer-mode simple-httpd json-mode json-snatcher json-reformat js2-refactor multiple-cursors js2-mode js-doc company-tern dash-functional tern coffee-mode solarized-theme xterm-color shell-pop multi-term eshell-z eshell-prompt-extras esh-help powerline spinner hydra parent-mode projectile pkg-info epl flx smartparens iedit anzu evil goto-chg undo-tree highlight f s diminish bind-map bind-key packed dash avy async popup company-go go-guru go-eldoc go-mode xah-find vimrc-mode dactyl-mode zonokai-theme zenburn-theme zen-and-art-theme underwater-theme ujelly-theme twilight-theme twilight-bright-theme twilight-anti-bright-theme tronesque-theme toxi-theme tao-theme tangotango-theme tango-plus-theme tango-2-theme sunny-day-theme sublime-themes subatomic256-theme subatomic-theme spacegray-theme soothe-theme soft-stone-theme soft-morning-theme soft-charcoal-theme smyx-theme seti-theme reverse-theme railscasts-theme purple-haze-theme professional-theme planet-theme phoenix-dark-pink-theme phoenix-dark-mono-theme pastels-on-dark-theme organic-green-theme omtose-phellack-theme oldlace-theme occidental-theme obsidian-theme noctilux-theme niflheim-theme naquadah-theme mustang-theme monokai-theme monochrome-theme molokai-theme moe-theme minimal-theme material-theme majapahit-theme lush-theme light-soap-theme jbeans-theme jazz-theme ir-black-theme inkpot-theme heroku-theme hemisu-theme hc-zenburn-theme gruvbox-theme gruber-darker-theme grandshell-theme gotham-theme gandalf-theme flatui-theme flatland-theme firebelly-theme farmhouse-theme espresso-theme dracula-theme django-theme darktooth-theme darkokai-theme darkmine-theme darkburn-theme dakrone-theme cyberpunk-theme color-theme-sanityinc-tomorrow color-theme-sanityinc-solarized clues-theme cherry-blossom-theme busybee-theme bubbleberry-theme birds-of-paradise-plus-theme badwolf-theme apropospriate-theme anti-zenburn-theme ample-zen-theme ample-theme alect-themes afternoon-theme xcscope smex alert log4e gntp mmm-mode markdown-toc markdown-mode htmlize gnuplot git-gutter-fringe+ git-gutter-fringe fringe-helper git-gutter+ git-gutter gh-md flycheck-pos-tip flycheck diff-hl smeargle orgit magit-gitflow magit-gh-pulls gitignore-mode github-search github-clone github-browse-file gitconfig-mode gitattributes-mode git-timemachine git-messenger git-link gist gh marshal logito pcache ht evil-magit magit magit-popup git-commit with-editor disaster company-c-headers cmake-mode clang-format helm-c-yasnippet company-statistics company-quickhelp pos-tip company auto-yasnippet yasnippet ac-ispell auto-complete ws-butler window-numbering which-key volatile-highlights vi-tilde-fringe uuidgen use-package toc-org spacemacs-theme spaceline restart-emacs request rainbow-delimiters quelpa popwin persp-mode pcre2el paradox open-junk-file neotree move-text macrostep lorem-ipsum linum-relative link-hint info+ indent-guide ido-vertical-mode hungry-delete hl-todo highlight-parentheses highlight-numbers highlight-indentation hide-comnt help-fns+ google-translate golden-ratio flx-ido fill-column-indicator fancy-battery eyebrowse expand-region exec-path-from-shell evil-visualstar evil-visual-mark-mode evil-unimpaired evil-tutor evil-surround evil-search-highlight-persist evil-numbers evil-nerd-commenter evil-mc evil-matchit evil-lisp-state evil-indent-plus evil-iedit-state evil-exchange evil-escape evil-ediff evil-args evil-anzu eval-sexp-fu elisp-slime-nav dumb-jump define-word column-enforce-mode clean-aindent-mode auto-highlight-symbol auto-compile aggressive-indent adaptive-wrap ace-window ace-link ace-jump-helm-line)))
+    (toml-mode racer flycheck-rust cargo rust-mode go-projectile go-rename reveal-in-osx-finder pbcopy osx-trash osx-dictionary launchctl flycheck-gometalinter org-plus-contrib org-bullets helm-make counsel-gtags color-moccur transient lv ivy-rich wgrep ivy-hydra counsel-projectile counsel swiper ivy web-mode tagedit slim-mode scss-mode sass-mode pug-mode less-css-mode haml-mode emmet-mode company-web web-completion-data treepy graphql yasnippet-classic-snippets pythonic yasnippet-snippets nameframe-projectile white-sand-theme rebecca-theme exotica-theme ghub let-alist hackernews winum madhat2r-theme fuzzy autothemer sanityinc-tomorrow-night-theme-theme yaml-mode csv-mode ranger visual-fill-column yapfify pyvenv pytest pyenv-mode py-isort pip-requirements live-py-mode hy-mode cython-mode company-anaconda anaconda-mode phpunit phpcbf php-extras php-auto-yasnippets drupal-mode php-mode web-beautify livid-mode skewer-mode simple-httpd json-mode json-snatcher json-reformat js2-refactor multiple-cursors js2-mode js-doc company-tern dash-functional tern coffee-mode solarized-theme xterm-color shell-pop multi-term eshell-z eshell-prompt-extras esh-help powerline spinner hydra parent-mode projectile pkg-info epl flx smartparens iedit anzu evil goto-chg undo-tree highlight f s diminish bind-map bind-key packed dash avy async popup company-go go-guru go-eldoc go-mode xah-find vimrc-mode dactyl-mode zonokai-theme zenburn-theme zen-and-art-theme underwater-theme ujelly-theme twilight-theme twilight-bright-theme twilight-anti-bright-theme tronesque-theme toxi-theme tao-theme tangotango-theme tango-plus-theme tango-2-theme sunny-day-theme sublime-themes subatomic256-theme subatomic-theme spacegray-theme soothe-theme soft-stone-theme soft-morning-theme soft-charcoal-theme smyx-theme seti-theme reverse-theme railscasts-theme purple-haze-theme professional-theme planet-theme phoenix-dark-pink-theme phoenix-dark-mono-theme pastels-on-dark-theme organic-green-theme omtose-phellack-theme oldlace-theme occidental-theme obsidian-theme noctilux-theme niflheim-theme naquadah-theme mustang-theme monokai-theme monochrome-theme molokai-theme moe-theme minimal-theme material-theme majapahit-theme lush-theme light-soap-theme jbeans-theme jazz-theme ir-black-theme inkpot-theme heroku-theme hemisu-theme hc-zenburn-theme gruvbox-theme gruber-darker-theme grandshell-theme gotham-theme gandalf-theme flatui-theme flatland-theme firebelly-theme farmhouse-theme espresso-theme dracula-theme django-theme darktooth-theme darkokai-theme darkmine-theme darkburn-theme dakrone-theme cyberpunk-theme color-theme-sanityinc-tomorrow color-theme-sanityinc-solarized clues-theme cherry-blossom-theme busybee-theme bubbleberry-theme birds-of-paradise-plus-theme badwolf-theme apropospriate-theme anti-zenburn-theme ample-zen-theme ample-theme alect-themes afternoon-theme xcscope smex alert log4e gntp mmm-mode markdown-toc markdown-mode htmlize gnuplot git-gutter-fringe+ git-gutter-fringe fringe-helper git-gutter+ git-gutter gh-md flycheck-pos-tip flycheck diff-hl smeargle orgit magit-gitflow magit-gh-pulls gitignore-mode github-search github-clone github-browse-file gitconfig-mode gitattributes-mode git-timemachine git-messenger git-link gist gh marshal logito pcache ht evil-magit magit magit-popup git-commit with-editor disaster company-c-headers cmake-mode clang-format helm-c-yasnippet company-statistics company-quickhelp pos-tip company auto-yasnippet yasnippet ac-ispell auto-complete ws-butler window-numbering which-key volatile-highlights vi-tilde-fringe uuidgen use-package toc-org spacemacs-theme spaceline restart-emacs request rainbow-delimiters quelpa popwin persp-mode pcre2el paradox open-junk-file neotree move-text macrostep lorem-ipsum linum-relative link-hint info+ indent-guide ido-vertical-mode hungry-delete hl-todo highlight-parentheses highlight-numbers highlight-indentation hide-comnt help-fns+ google-translate golden-ratio flx-ido fill-column-indicator fancy-battery eyebrowse expand-region exec-path-from-shell evil-visualstar evil-visual-mark-mode evil-unimpaired evil-tutor evil-surround evil-search-highlight-persist evil-numbers evil-nerd-commenter evil-mc evil-matchit evil-lisp-state evil-indent-plus evil-iedit-state evil-exchange evil-escape evil-ediff evil-args evil-anzu eval-sexp-fu elisp-slime-nav dumb-jump define-word column-enforce-mode clean-aindent-mode auto-highlight-symbol auto-compile aggressive-indent adaptive-wrap ace-window ace-link ace-jump-helm-line)))
  '(paradox-github-token t)
  '(pdf-view-midnight-colors (quote ("#DCDCCC" . "#383838")))
  '(projectile-enable-caching t)

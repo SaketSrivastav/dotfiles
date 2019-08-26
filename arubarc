@@ -1,17 +1,193 @@
 # aliases
 
 # halonVM ssh shortcut
-HALON_VM="hpnsw5278.rose.rdlabs.hpecorp.net"
-HALON_USER="srivasak"
-
-localFolder="halon_vm"
-localDir="$HOME/$localFolder"
-remoteDir="/ws/$HALON_USER/"
-alias gotovm="ssh -Y $HALON_USER@$HALON_VM"
-alias mnth="sudo /usr/local/bin/sshfs -o allow_other,defer_permissions,IdentityFile=~/.ssh/id_rsa $HALON_USER@$HALON_VM:$remoteDir $localDir"
+#HALON_VM="hpnsw5278.rose.rdlabs.hpecorp.net"
+#HALON_USER="srivasak"
+#
+#localFolder="halon_vm"
+#localDir="$HOME/$localFolder"
+#remoteDir="/ws/$HALON_USER/"
+#alias gotovm="ssh -Y $HALON_USER@$HALON_VM"
+#alias mnth="sudo /usr/local/bin/sshfs -o allow_other,defer_permissions,IdentityFile=~/.ssh/id_rsa $HALON_USER@$HALON_VM:$remoteDir $localDir"
 # command below requires ssh login configured to login automatically
 # links:
 # https://jonathansblog.co.uk/sshfs-mount-remote-drive-in-finder
 # https://jonathansblog.co.uk/ssh-with-keys-for-authentication
 #alias mnt="umount -f $localDir; pkill -kill -f \"sshfs\"; /usr/local/bin/sshfs -o reconnect -o volname=$localFolder -o $HALON_USER@$HALON_VM:$remoteDir $localDir"
-alias unmnt="sudo umount -f $localDir; pkill -kill -f \"sshfs\""
+#alias unmnt="sudo umount -f $localDir; pkill -kill -f \"sshfs\""
+
+#HALON common aliases
+alias cdh0="cd /ws/$USER/halon0/halon"
+alias cdh1="cd /ws/$USER/halon1/halon"
+alias cdh2="cd /ws/$USER/halon2/halon"
+alias he="source tools/srcMe && setup_Go_environment && emacs COPYING"
+
+# Halon build aliases
+alias hbp="hb pbuild"
+alias hbpg="hb pbuild genericx86-p4"
+alias hbc="hb clean -y -p"
+
+# Docker aliases
+function dockercp() {
+    if [[ -z $1 || -z $2 || -z $3 ]]; then
+       echo "usage: dockercp <ws-num> <daemon-name> <docker-image>"
+       return 1
+    fi
+    echo "docker cp /ws/$USER/$1/halon/build-genericx86-p4/tmp/work/core2-64-cnos-linux/$2/1.0-r0/image/usr/bin/$2 $3:/usr/bin/"
+    docker cp /ws/$USER/$1/halon/build-genericx86-p4/tmp/work/core2-64-cnos-linux/$2/1.0-r0/image/usr/bin/$2 $3:/usr/bin/
+}
+
+# Git aliases
+alias ggpr="git push gerrit HEAD:refs/for/master%ready"
+alias ggpp="git push gerrit HEAD:refs/for/master%private"
+alias ggpw="git push gerrit HEAD:refs/for/master%wip"
+alias gopr="git push origin HEAD:refs/for/master%ready"
+
+
+# Helper Aliases
+#function makepub () {
+#    if [[ -z $1 || -z $2 ]]; then
+#        echo "usage: makepub <ws-num> <platform>"
+#        return 1
+#    fi
+#
+#    ws_dir="/ws/$USER/halon$1/halon/images"
+#    pushd $ws_dir
+#    case $2
+#    pub_img_name="`git symbolic-ref --short -q HEAD`"
+#}
+
+function execcmd () {
+    echo "Executing: $1"
+    $1
+}
+
+function htg () {
+    if [[ -z $1 || -z $2 || -z $3 ]]
+    then
+        echo "usage: htg <platform-name> <image-path> <tests> <repeat=1>"
+        return 1
+    fi
+
+    if [[ -z $4 ]]
+    then
+        $4 = 1    
+    fi
+
+    set -x
+    ht -h $1 -y -i $2 -t $3 -r $4
+    set +x
+}
+
+function toxr () {
+    if [[ -z $1 || -z $2 ]]
+    then
+        echo "usage: toxr <rsvnid> <tests>"
+        return 1
+    fi
+    set +x
+    tox -r -- --topology-platform ostl --ostl-lab OSTL --ostl-rsvnid $1\
+        --ostl-destroy false -k $2 -s
+    set +x
+}
+
+function runds () {
+    if [[ -z $1 && -z $2 && -z $3 ]]
+    then
+        print_err "usage: runds <halon-ws> <container-name> port"
+        print_err "usage: runds <clean> <container-name>/all"
+        return 1
+    fi
+
+    if [[ $1 == "clean" ]]
+    then
+        if [[ -z $2 ]]
+        then
+           print_text "Clean all docker instances and images"
+           docker rm -f $(docker ps -a -q)
+           docker rmi -f $(docker images -q)
+           return 0
+        fi
+
+        print_text "Cleaning halon-$2"
+        docker rm -f $(docker ps -f name=halon-$2 -q)
+        docker rmi -f $(docker images halon-$2:latest -q)
+        return 0
+    fi
+
+    cont_name="halon-$2"
+    build_dir="/ws/$USER/halon$1/halon/images/arubaoscx-disk-image-genericx86-p4.tar.gz"
+    print_text "Creating docker container $cont_name from $build_dir"
+    docker import $build_dir $cont_name
+    docker run --privileged --detach --name $cont_name --publish $3:443/tcp halon-$2 /sbin/init
+    enterdocker halon-$2
+}
+
+function get_latest_pf_bname() {
+
+    if [[ -z $1 ]]; then
+        echo "usage: get_latest_pf_name <ridley/speedway/golfclub/topflite>"
+        return 1
+    fi
+
+    case $1 in
+        "ridley")
+            pf_prefix="XL"
+            ;;
+        "topflite")
+            pf_prefix="TL"
+            ;;
+        "golfclub")
+            pf_prefix="GL"
+            ;
+        "speedway")
+            pf_prefix="FL"
+            ;;
+    esac
+
+    if [[ -z $pf_prefix ]]; then
+        return 1
+    fi
+
+    pushd /aruba/release/master/official > /dev/null
+    local bname=$(ls -t | grep "$pf_prefix"_ | head -n 1)
+    popd > /dev/null
+    echo "$bname"
+}
+
+function hdebug() {
+    if [[ -z $1 || -z $2 || -z $3 ]]; then
+        print_err "usage: hdebug <crnumber> <daemon-name> <platform-name>"
+        return 1
+    fi
+
+    cr_dir="/aruba/cr_data/CR$1"
+    dn=$2
+    p=$(get_latest_pf_bname $3)
+
+    set +x
+    # Find the core file in cr directory
+    pushd $cr_dir > /dev/null
+    print_text "Search for core file in $cr_dir"
+    xz_core_file=$(find . -name "core.$dn.*.xz" | head -n 1)
+    if [[ -z $xz_core_file ]]; then
+        core_file=$(find . -name "core.$dn.*" | head -n 1)
+    else
+        xz -d $xz_core_file
+        core_file=$(find . -name "core.$dn.*" | head -n 1)
+    fi
+
+    if [[ -z $core_file ]]; then
+        print_text "Failed to geerate or get core file at $cr_dir for daemon $dn"
+        return 1
+    fi
+
+    print_text "Analysing core file $cr_dir/$core_file present for daemon $dn"
+    Coredump-Analyzer -r $p -c $core_file
+    print_text "Core file analyzed"
+    popd  > /dev/null
+
+    pushd /ws/$USER/triage/$p/mm/rootfs-dbg/usr/lib/debug/usr/bin/ > /dev/null
+    dlv core $dn.debug $cr_dir/$core_file
+    set +x
+}

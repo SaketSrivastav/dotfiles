@@ -151,7 +151,7 @@ export REF_DIR=`pwd`
 #jdk=/Program\ Files/Java/jdk1.7.0_40
 #export PATH="${PATH}:${jdk}/bin"
 #export PATH="${PATH}:/sbin/"
-export PATH="/usr/local/timostools/netsnmp5:${PATH}:/sbin/:/usr/sbin/:/home/saketkus/myscripts/:/home/saketkus/myscripts/pyscript/:/usr/global/bin/"
+#export PATH="/usr/local/timostools/netsnmp5:${PATH}:/sbin/:/usr/sbin/:/home/saketkus/myscripts/:/home/saketkus/myscripts/pyscript/:/usr/global/bin/"
 alias mibcheck='$PAN_DIR/agent/ti-mibs/tools/checkmibgroups.pl'
 echo  to do snmp operations do: linkmibs.sh `pwd`
 

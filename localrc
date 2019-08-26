@@ -12,7 +12,18 @@ export TERM=xterm-256color
 
 # cd command aliases
 
-alias vi='vim'
+# Add golang to PATH
+if [ -d /usr/local/go ]
+then
+    export GOROOT=/usr/local/go
+    export PATH="${PATH}:$GOROOT/bin"
+fi
+
+if [ -d $HOME/gowork ]
+then
+    export GOPATH="$HOME/gowork"
+    export PATH="${PATH}:$GOPATH/bin"
+fi
 
 # Build related aliases
 
@@ -20,25 +31,6 @@ alias vi='vim'
 alias tags='echo "find . -name *.c -o -name *.h | xargs etags -f TAGS"; find . -name *.c -o -name *.h | xargs etags -f TAGS'
 
 # Setup Perl Directory
-# if [ -d /usr/local/Perl/bin ]
-# then
-#     PERL_DIR=/usr/local/Perl/bin
-#     SENDMAIL=/usr/local/Perl/bin/sendmail.pl
-# elif [ -d h:/usr/local/Perl ]
-# then
-#     PERL_DIR=h:/usr/local/Perl
-#     SENDMAIL=h:/usr/local/bin/sendmail.pl
-# else
-#     echo "Can't find Perl directory."
-# fi
-
-# Use Colors
-# LS_OPTIONS='--color=auto'
-
-#jdk=/Program\ Files/Java/jdk1.7.0_40
-#export PATH="${PATH}:${jdk}/bin"
-#export PATH="${PATH}:/sbin/"
-#echo  to do snmp operations do: linkmibs.sh `pwd`
 
 ###################################################################################################
 #                                      Saket: My Aliases
@@ -58,21 +50,22 @@ export EDITOR=vim
 
 #Git
 alias gdiff='git diff --name-status'
-alias gvdiff='meld `pwd` &'
-alias gReview='git diff | java -jar /home/saketkus/Softwares/difr/difr.jar'
-alias startGitblit='java -jar /home/saketkus/Softwares/gitblit-1.4.1/gitblit.jar --baseFolder /home/saketkus/ws/data/ &'
+alias gb="git branch"
+alias gpr="git pull --rebase"
+alias gsu="git branch --set-upstream"
+alias ggs="git status -uno"
+alias ggl="git log --oneline"
+alias gco='git checkout'
 #source /home/saketkus/git-completion.bash
 
 #Local Alias
 #alias vncserver='vncserver :1 -nolisten local -geometry 1440x1080'
 alias vncserver='vncserver -geometry 1920x900'
-alias rcsource='source /home/saketkus/.zshrc'
+alias rcsource='source $HOME/.zshrc ; source $HOME/.bashrc'
 alias rcvim='v ~/.vimrc'
 alias cron_edit='VISUAL=/usr/bin/gedit crontab -e'
 
 #Mount shortcuts
-#alias usrg='sudo mount -t nfs cumulo.us.alcatel-lucent.com:/usr_global /usr/global/'
-alias usrg='sudo mount -t nfs asper.mv.nuagenetworks.net:/usr_global /usr/global/'
 
 # Nuage Release
 
@@ -97,7 +90,7 @@ alias tkw='tmux kill-window -a'
 #PS1="$PS1"'$([ -n "$TMUX" ] && tmux setenv TMUXPWD_$(tmux display -p "#D" | tr -d %) "$PWD")'
 
 #Emacs shortcuts
-alias ems='emacs --daemon --insecure > /tmp/ems.log 2>&1'
+alias ems='pkill emacs ; pkill emacsclient ; emacs --daemon --insecure > /tmp/ems.log 2>&1'
 alias emc='emacsclient -c -a ""'
 alias emt='emacsclient -nw -a ""'
 
@@ -118,4 +111,19 @@ alias ta='task add'
 alias tl='task list'
 alias td='task delete'
 
+##############################################################
+#            Bash Color Prints
+##############################################################
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+BLUE='\033[0;34m'
+ENDC='\033[0m'
+NOC='\033[0m'
 
+function print_text() {
+    echo -e "${GREEN}>>>>>>> $1${ENDC}"
+}
+
+function print_err() {
+    echo -e "${RED}>>>>>>> $1${ENDC}"
+}
