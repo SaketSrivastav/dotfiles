@@ -329,6 +329,7 @@ before packages are loaded. If you are unsure, you should try in setting them in
   ;; Avoid environment startup error
   (setq exec-path-from-shell-check-startup-files nil)
   (setq exec-path-from-shell-arguments '("-c"))
+  (setq exec-path-from-shell-copy-env "GOPATH")
 
   ;;Magit
   magit-repository-directories '("~/ws/")

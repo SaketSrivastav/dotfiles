@@ -54,14 +54,15 @@ alias gb="git branch"
 alias gpr="git pull --rebase"
 alias gsu="git branch --set-upstream"
 alias ggs="git status -uno"
-alias ggl="git log --oneline"
+alias ggl="git log --oneline --format='%C(yellow)%h %Cblue%>(12)%ad %Cgreen%<(7)%aN%Cred%d %Creset%s'"
 alias gco='git checkout'
 #source /home/saketkus/git-completion.bash
 
 #Local Alias
 #alias vncserver='vncserver :1 -nolisten local -geometry 1440x1080'
 alias vncserver='vncserver -geometry 1920x900'
-alias rcsource='source $HOME/.zshrc ; source $HOME/.bashrc'
+alias rcbash='source $HOME/.bashrc'
+alias rczsh='source $HOME/.zshrc'
 alias rcvim='v ~/.vimrc'
 alias cron_edit='VISUAL=/usr/bin/gedit crontab -e'
 
@@ -91,8 +92,9 @@ alias tkw='tmux kill-window -a'
 
 #Emacs shortcuts
 alias ems='pkill emacs ; pkill emacsclient ; emacs --daemon --insecure > /tmp/ems.log 2>&1'
-alias emc='emacsclient -c -a ""'
+alias emc='emacsclient -c -a -q "" -d :50 . &'
 alias emt='emacsclient -nw -a ""'
+alias pse="ps -ef | grep emacs"
 
 #Mounts
 
@@ -127,3 +129,7 @@ function print_text() {
 function print_err() {
     echo -e "${RED}>>>>>>> $1${ENDC}"
 }
+
+# Regular aliases
+alias grep="grep --color=auto"
+alias rg="rg --no-heading"
