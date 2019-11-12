@@ -16,7 +16,7 @@ ZSH_THEME="robbyrussell"
 # HYPHEN_INSENSITIVE="true"
 
 # Uncomment the following line to disable bi-weekly auto-update checks.
-# DISABLE_AUTO_UPDATE="true"
+DISABLE_AUTO_UPDATE="true"
 
 # Uncomment the following line to change how often to auto-update (in days).
 # export UPDATE_ZSH_DAYS=13
@@ -36,7 +36,7 @@ export DISABLE_AUTO_TITLE="true"
 # Uncomment the following line if you want to disable marking untracked files
 # under VCS as dirty. This makes repository status check for large repositories
 # much, much faster.
-# DISABLE_UNTRACKED_FILES_DIRTY="true"
+DISABLE_UNTRACKED_FILES_DIRTY="true"
 
 # Uncomment the following line if you want to change the command execution time
 # stamp shown in the history command output.
@@ -63,8 +63,6 @@ plugins=(git)
 #    export GOPATH=/home/saketkus/gocode
 #    export PATH=$PATH:$GOROOT/bin:$GOPATH/bin
 #fi
-
-source $ZSH/oh-my-zsh.sh
 
 # You may need to manually set your language environment
 export LANG=en_US.UTF-8
@@ -98,3 +96,5 @@ fi
 if [ -f ~/dotfiles/arubarc ]; then
     source ~/dotfiles/arubarc
 fi
+
+source $ZSH/oh-my-zsh.sh

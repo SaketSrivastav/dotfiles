@@ -33,7 +33,13 @@ values."
    '(
      yaml
      php
-     markdown
+     ;; lsp
+     (markdown
+      :variables
+      markdown-url-compose-char ?∞
+      markdown-blockquote-display-char "▌"
+      markdown-hr-display-char ?─
+      markdown-definition-display-char ?⁘)
      (go
       :variables
       go-use-gometalinter t
@@ -371,8 +377,7 @@ you should place your code here."
   ;; (setq-default spacemacs/toggle-fill-column-indicator-on)
 
   ;; Filenames
-  (dolist (e '(("xml" . xml-mode)
-               ("json" . json-mode)
+  (dolist (e '(("json" . json-mode)
                ("schema" . json-mode)
                ("C" . c++-mode)
                ("h" . c++-mode)
@@ -489,6 +494,8 @@ you should place your code here."
   ;; User Mappings
   (spacemacs/declare-prefix "o" "custom")
   (spacemacs/set-leader-keys (kbd "or") 'open-remdocs)
+  (spacemacs/set-leader-keys (kbd "of") 'current-file-name)
+
   ;; (spacemacs/set-leader-keys (kbd "ot") 'helm-cscope-pop-mark)
   (spacemacs/set-leader-keys (kbd "ox") 'xml-format)
   (spacemacs/set-leader-keys (kbd "oj") 'json-format)
@@ -537,6 +544,8 @@ you should place your code here."
   ;; My go-mode hooks
   (add-hook 'go-mode-hook 'my-go-mode-hooks)
 
+  (spacemacs/set-leader-keys (kbd "os") 'halon-rg-src)
+  (spacemacs/set-leader-keys (kbd "ot") 'halon-rg-test)
   (spacemacs/set-leader-keys (kbd "*") 'counsel-projectile-rg)
   (spacemacs/set-leader-keys (kbd "/") 'counsel-projectile-rg)
 )
@@ -676,10 +685,13 @@ around point as the initial input."
   (require 'go-guru)
   (add-hook 'go-mode-hook 'go-projectile-mode)
   (add-hook 'go-mode-hook 'go-guru-hl-identifier-mode)
+  (exec-path-from-shell-copy-env "GOPATH")
+  ;; (add-hook 'go-mode-hook 'lsp-deferred)
 
-  (spacemacs/set-leader-keys (kbd "os") 'halon-rg-src)
-  (spacemacs/set-leader-keys (kbd "ot") 'halon-rg-test)
 )
+
+(defun current-file-name ()
+  (buffer-file-name (current-buffer)))
 
 ;; Do not write anything past this comment. This is where Emacs will
 ;; auto-generate custom variable definitions.

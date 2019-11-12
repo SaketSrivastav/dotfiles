@@ -1,6 +1,7 @@
 # Settings from bashrc
 
 export TERM=xterm-256color
+export DISPLAY=:50
 
 #
 # If you have a bin in your home directory, we'll use it
@@ -65,6 +66,8 @@ alias rcbash='source $HOME/.bashrc'
 alias rczsh='source $HOME/.zshrc'
 alias rcvim='v ~/.vimrc'
 alias cron_edit='VISUAL=/usr/bin/gedit crontab -e'
+alias readm="cat /var/mail/srivasak"
+alias rmmail="rm -f /var/mail/srivasak"
 
 #Mount shortcuts
 
@@ -92,8 +95,9 @@ alias tkw='tmux kill-window -a'
 
 #Emacs shortcuts
 alias ems='pkill emacs ; pkill emacsclient ; emacs --daemon --insecure > /tmp/ems.log 2>&1'
-alias emc='emacsclient -c -a -q "" -d :50 . &'
+alias emc='emacsclient -c -d :50 -a "" . &'
 alias emt='emacsclient -nw -a ""'
+alias emacs="emacs -d $DISPLAY "
 alias pse="ps -ef | grep emacs"
 
 #Mounts
@@ -133,3 +137,8 @@ function print_err() {
 # Regular aliases
 alias grep="grep --color=auto"
 alias rg="rg --no-heading"
+
+#Docker aliases
+alias dex="docker exec -it"
+alias di="docker import"
+alias dpa="docker ps -a"
